@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 import school.hei.springagricole.config.DataSource;
 import school.hei.springagricole.entity.Collectivity;
 import school.hei.springagricole.entity.CollectivityStructure;
+import school.hei.springagricole.entity.Member;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -22,15 +23,11 @@ public class CollectivityRepository {
         this.memberRepository = memberRepository;
     }
 
-    /**
-     * Sauvegarde une collectivité complète (table collectivity + structure + liaison membres).
-     */
     public Collectivity save(Collectivity collectivity) {
         Connection conn = dataSource.getConnection();
         try {
             conn.setAutoCommit(false);
 
-            // 1. Insertion dans la table collectivity
             try (PreparedStatement stmt = conn.prepareStatement(
                     "INSERT INTO collectivity (id, location, creation_date) VALUES (?, ?, ?)")) {
                 stmt.setString(1, collectivity.getId());
@@ -39,7 +36,6 @@ public class CollectivityRepository {
                 stmt.executeUpdate();
             }
 
-            // 2. Insertion de la structure (president, VP, treasurer, secretary)
             try (PreparedStatement stmt = conn.prepareStatement(
                     "INSERT INTO collectivity_structure " +
                             "(collectivity_id, president_id, vice_president_id, treasurer_id, secretary_id) " +
@@ -52,7 +48,6 @@ public class CollectivityRepository {
                 stmt.executeUpdate();
             }
 
-            // 3. Mise à jour du collectivity_id pour chaque membre rattaché
             if (collectivity.getMembers() != null && !collectivity.getMembers().isEmpty()) {
                 try (PreparedStatement stmt = conn.prepareStatement(
                         "UPDATE member SET collectivity_id = ? WHERE id = ?")) {
@@ -79,9 +74,6 @@ public class CollectivityRepository {
         }
     }
 
-    /**
-     * Charge une collectivité complète depuis la base (avec structure et membres).
-     */
     public Optional<Collectivity> findById(String id) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
@@ -95,10 +87,8 @@ public class CollectivityRepository {
                 collectivity.setId(rs.getString("id"));
                 collectivity.setLocation(rs.getString("location"));
 
-                // Chargement de la structure
                 collectivity.setStructure(loadStructure(conn, id));
 
-                // Chargement des membres
                 collectivity.setMembers(loadMembers(conn, id));
 
                 return Optional.of(collectivity);
@@ -112,9 +102,6 @@ public class CollectivityRepository {
         }
     }
 
-    /**
-     * Charge la structure d'une collectivité depuis la DB.
-     */
     private CollectivityStructure loadStructure(Connection conn, String collectivityId) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(
                 "SELECT * FROM collectivity_structure WHERE collectivity_id = ?")) {
@@ -136,9 +123,6 @@ public class CollectivityRepository {
         return null;
     }
 
-    /**
-     * Charge tous les membres d'une collectivité depuis la DB.
-     */
     private List<Member> loadMembers(Connection conn, String collectivityId) throws SQLException {
         List<Member> members = new java.util.ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(
