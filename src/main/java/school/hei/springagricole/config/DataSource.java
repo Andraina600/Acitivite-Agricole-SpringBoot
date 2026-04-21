@@ -1,0 +1,32 @@
+package school.hei.springagricole.config;
+
+import org.springframework.stereotype.Component;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+@Component
+public class DataSource {
+    public Connection getConnection() {
+        try {
+            return DriverManager.getConnection(
+                    System.getenv("JDBC_URL"),
+                    System.getenv("USERNAME"),
+                    System.getenv("PASSWORD")
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur de connexion à la base de données", e);
+        }
+    }
+
+    public void closeConnection(Connection connection) {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+}
