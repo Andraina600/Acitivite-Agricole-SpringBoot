@@ -1,4 +1,5 @@
 package school.hei.springagricole.service;
+
 import org.springframework.stereotype.Service;
 import school.hei.springagricole.entity.MembershipFee;
 import school.hei.springagricole.exception.BadRequestException;
@@ -24,25 +25,25 @@ public class MembershipFeeService {
     public List<MembershipFee> getByCollectivityId(String collectivityId) {
         collectivityRepository.findById(collectivityId)
                 .orElseThrow(() -> new NotFoundException(
-                        "Collectivité non trouvée : " + collectivityId));
+                        "Collectivity not found: " + collectivityId));
         return membershipFeeRepository.findByCollectivityId(collectivityId);
     }
 
     public List<MembershipFee> create(String collectivityId, List<MembershipFee> fees) {
         collectivityRepository.findById(collectivityId)
                 .orElseThrow(() -> new NotFoundException(
-                        "Collectivité non trouvée : " + collectivityId));
+                        "Collectivity not found: " + collectivityId));
 
         for (MembershipFee fee : fees) {
             if (fee.getAmount() == null || fee.getAmount().compareTo(BigDecimal.ZERO) < 0) {
                 throw new BadRequestException(
-                        "Le montant d'une cotisation ne peut pas être négatif");
+                        "Membership fee amount cannot be negative");
             }
             if (fee.getFrequency() == null) {
-                throw new BadRequestException("La fréquence est obligatoire");
+                throw new BadRequestException("Frequency is mandatory");
             }
             if (fee.getEligibleFrom() == null) {
-                throw new BadRequestException("La date eligible_from est obligatoire");
+                throw new BadRequestException("The date eligible_from is mandatory");
             }
 
             fee.setCollectivityId(collectivityId);

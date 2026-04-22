@@ -45,7 +45,7 @@ public class MemberPaymentService {
     public List<MemberPayment> createPayments(String memberId, List<MemberPayment> payments) {
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundException("Membre non trouvé : " + memberId));
+                .orElseThrow(() -> new NotFoundException("Member not found: " + memberId));
 
         for (MemberPayment payment : payments) {
             memberPaymentValidator.validatePayment(payment);
@@ -61,12 +61,12 @@ public class MemberPaymentService {
             for (MemberPayment payment : payments) {
                 MembershipFee fee = membershipFeeRepository.findById(payment.getMembershipFeeId())
                         .orElseThrow(() -> new NotFoundException(
-                                "Cotisation non trouvée : " + payment.getMembershipFeeId()));
+                                "Membership fee not found: " + payment.getMembershipFeeId()));
 
                 FinancialAccount account = financialAccountRepository
                         .findById(payment.getAccountCreditedId())
                         .orElseThrow(() -> new NotFoundException(
-                                "Compte financier non trouvé : " + payment.getAccountCreditedId()));
+                                "Financial account not found: " + payment.getAccountCreditedId()));
 
                 MemberPayment savedPayment = memberPaymentRepository.save(payment);
 
@@ -94,18 +94,17 @@ public class MemberPaymentService {
 
         } catch (NotFoundException | BadRequestException e) {
             try { conn.rollback(); } catch (SQLException ex) {
-                throw new RuntimeException("Erreur critique rollback paiements", ex);
+                throw new RuntimeException("Critical error during payment rollback", ex);
             }
             throw e;
         } catch (SQLException e) {
             try { conn.rollback(); } catch (SQLException ex) {
-                throw new RuntimeException("Erreur critique rollback paiements", ex);
+                throw new RuntimeException("Critical error during payment rollback", ex);
             }
-            throw new RuntimeException("Erreur lors de la création des paiements", e);
+            throw new RuntimeException("Error occurred while creating payments", e);
         } finally {
             try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
             dataSource.closeConnection(conn);
         }
     }
-
 }

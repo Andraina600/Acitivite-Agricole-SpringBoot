@@ -10,16 +10,16 @@ import java.math.BigDecimal;
 public class MemberPaymentValidator {
     public void validatePayment(MemberPayment payment) {
         if (payment.getAmount() == null || payment.getAmount().compareTo(BigDecimal.ZERO) < 0) {
-            throw new BadRequestException("Le montant d'un paiement ne peut pas être négatif");
+            throw new BadRequestException("Payment amount cannot be negative");
         }
         if (payment.getMembershipFeeId() == null || payment.getMembershipFeeId().isBlank()) {
-            throw new BadRequestException("L'identifiant de la cotisation est obligatoire");
+            throw new BadRequestException("Membership fee identifier is mandatory");
         }
         if (payment.getAccountCreditedId() == null || payment.getAccountCreditedId().isBlank()) {
-            throw new BadRequestException("L'identifiant du compte crédité est obligatoire");
+            throw new BadRequestException("Credited account identifier is mandatory");
         }
         if (payment.getPaymentMode() == null) {
-            throw new BadRequestException("Le mode de paiement est obligatoire");
+            throw new BadRequestException("Payment mode is mandatory");
         }
     }
 }
