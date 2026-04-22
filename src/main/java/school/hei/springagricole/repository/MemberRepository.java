@@ -34,7 +34,6 @@ public class MemberRepository {
 
             if (rs.next()) {
                 Member member = mapRowToMember(rs);
-                // On passe la connexion existante pour éviter d'en ouvrir une nouvelle inutilement
                 member.setReferees(findRefereesByMemberId(conn, member.getId()));
                 return Optional.of(member);
             }
@@ -70,7 +69,7 @@ public class MemberRepository {
                 stmt.setString(5, member.getGender().name());
                 stmt.setString(6, member.getAddress());
                 stmt.setString(7, member.getProfession());
-                stmt.setLong(8, member.getPhoneNumber()); // Utilisation de setLong pour BIGINT
+                stmt.setLong(8, member.getPhoneNumber());
                 stmt.setString(9, member.getEmail());
                 stmt.setString(10, member.getOccupation().name());
                 stmt.setString(11, member.getCollectivityId());

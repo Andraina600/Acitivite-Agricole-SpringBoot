@@ -168,7 +168,6 @@ public class CollectivityRepository {
                 collectivity.setName(rs.getString("name"));
                 collectivity.setLocation(rs.getString("location"));
 
-                // Chargement des dépendances complexes
                 collectivity.setStructure(loadStructure(conn, id));
                 collectivity.setMembers(loadMembers(conn, id));
                 return Optional.of(collectivity);
