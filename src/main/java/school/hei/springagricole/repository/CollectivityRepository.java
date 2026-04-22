@@ -1,6 +1,5 @@
 package school.hei.springagricole.repository;
 
-
 import org.springframework.stereotype.Repository;
 import school.hei.springagricole.config.DataSource;
 import school.hei.springagricole.entity.Collectivity;
@@ -79,9 +78,9 @@ public class CollectivityRepository {
 
         } catch (SQLException e) {
             try { conn.rollback(); } catch (SQLException ex) {
-                throw new RuntimeException("Erreur critique lors du rollback collectivité", ex);
+                throw new RuntimeException("Critical error during the collectivity rollback", ex);
             }
-            throw new RuntimeException("Erreur lors de la sauvegarde de la collectivité", e);
+            throw new RuntimeException("Error when saving the collectivity", e);
         } finally {
             try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
             dataSource.closeConnection(conn);
@@ -108,9 +107,9 @@ public class CollectivityRepository {
 
         } catch (SQLException e) {
             try { conn.rollback(); } catch (SQLException ex) {
-                throw new RuntimeException("Erreur critique lors du rollback identity", ex);
+                throw new RuntimeException("Critical error during the rollback identity", ex);
             }
-            throw new RuntimeException("Erreur lors de l'attribution de l'identité", e);
+            throw new RuntimeException("Error when assigning identity", e);
         } finally {
             try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
             dataSource.closeConnection(conn);
@@ -120,7 +119,7 @@ public class CollectivityRepository {
     public boolean existsByName(String name) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT COUNT(*) FROM collectivity WHERE name = ?")) {
+                "SELECT COUNT(id) FROM collectivity WHERE name = ?")) {
             stmt.setString(1, name);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -128,7 +127,7 @@ public class CollectivityRepository {
             }
             return false;
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la vérification du nom", e);
+            throw new RuntimeException("Error during name verification", e);
         } finally {
             dataSource.closeConnection(conn);
         }
@@ -137,7 +136,7 @@ public class CollectivityRepository {
     public boolean existsByNumber(Integer number) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT COUNT(*) FROM collectivity WHERE number = ?")) {
+                "SELECT COUNT(id) FROM collectivity WHERE number = ?")) {
             stmt.setInt(1, number);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -145,7 +144,7 @@ public class CollectivityRepository {
             }
             return false;
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la vérification du numéro", e);
+            throw new RuntimeException("Error during number verification", e);
         } finally {
             dataSource.closeConnection(conn);
         }
@@ -154,7 +153,7 @@ public class CollectivityRepository {
     public Optional<Collectivity> findById(String id) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT * FROM collectivity WHERE id = ?")) {
+                "SELECT id, number, name, location, creation_date FROM collectivity WHERE id = ?")) {
 
             stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
@@ -167,8 +166,9 @@ public class CollectivityRepository {
                 collectivity.setNumber(rs.wasNull() ? null : number);
 
                 collectivity.setName(rs.getString("name"));
-
                 collectivity.setLocation(rs.getString("location"));
+
+                // Chargement des dépendances complexes
                 collectivity.setStructure(loadStructure(conn, id));
                 collectivity.setMembers(loadMembers(conn, id));
                 return Optional.of(collectivity);
@@ -176,7 +176,7 @@ public class CollectivityRepository {
             return Optional.empty();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors du chargement de la collectivité: " + id, e);
+            throw new RuntimeException("Error during the upload of the collectivity: " + id, e);
         } finally {
             dataSource.closeConnection(conn);
         }
@@ -195,7 +195,8 @@ public class CollectivityRepository {
     private CollectivityStructure loadStructure(Connection conn, String collectivityId)
             throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT * FROM collectivity_structure WHERE collectivity_id = ?")) {
+                "SELECT president_id, vice_president_id, treasurer_id, secretary_id " +
+                        "FROM collectivity_structure WHERE collectivity_id = ?")) {
             stmt.setString(1, collectivityId);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {

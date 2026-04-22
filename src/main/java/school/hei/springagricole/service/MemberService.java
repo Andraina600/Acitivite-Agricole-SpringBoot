@@ -4,7 +4,7 @@ package school.hei.springagricole.service;
 import org.springframework.stereotype.Service;
 import school.hei.springagricole.entity.CreateMember;
 import school.hei.springagricole.entity.Member;
-import school.hei.springagricole.entity.MemberOccupation;
+import school.hei.springagricole.entity.enums.MemberOccupation;
 import school.hei.springagricole.exception.BadRequestException;
 import school.hei.springagricole.exception.NotFoundException;
 import school.hei.springagricole.repository.CollectivityRepository;

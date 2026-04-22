@@ -3,7 +3,7 @@ package school.hei.springagricole.repository;
 import org.springframework.stereotype.Repository;
 import school.hei.springagricole.config.DataSource;
 import school.hei.springagricole.entity.MemberPayment;
-import school.hei.springagricole.entity.PaymentMode;
+import school.hei.springagricole.entity.enums.PaymentMode;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -48,7 +48,7 @@ public class MemberPaymentRepository {
             return payment;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la sauvegarde du paiement membre", e);
+            throw new RuntimeException("Error when saving member payment", e);
         } finally {
             dataSource.closeConnection(conn);
         }
@@ -57,7 +57,7 @@ public class MemberPaymentRepository {
     public List<MemberPayment> findByMemberId(String memberId) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT id, member_id, membership_fee_id, account_credited_id, amount, payment_mode ,creation_date" +
+                "SELECT id, member_id, membership_fee_id, account_credited_id, amount, payment_mode, creation_date " +
                         " FROM member_payment WHERE member_id = ? ORDER BY creation_date DESC")) {
             stmt.setString(1, memberId);
             ResultSet rs = stmt.executeQuery();
@@ -67,7 +67,7 @@ public class MemberPaymentRepository {
             }
             return payments;
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur chargement paiements membre id=" + memberId, e);
+            throw new RuntimeException("Error loading payments member id=" + memberId, e);
         } finally {
             dataSource.closeConnection(conn);
         }
@@ -76,7 +76,7 @@ public class MemberPaymentRepository {
     public Optional<MemberPayment> findById(String id) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT id, member_id, membership_fee_id, account_credited_id, amount, payment_mode ,creation_date" +
+                "SELECT id, member_id, membership_fee_id, account_credited_id, amount, payment_mode, creation_date " +
                         " FROM member_payment WHERE id = ?")) {
             stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
@@ -85,7 +85,7 @@ public class MemberPaymentRepository {
             }
             return Optional.empty();
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur chargement paiement id=" + id, e);
+            throw new RuntimeException("Error loading payment id=" + id, e);
         } finally {
             dataSource.closeConnection(conn);
         }

@@ -2,6 +2,7 @@ package school.hei.springagricole.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import school.hei.springagricole.entity.enums.Bank;
 
 import java.math.BigDecimal;
 

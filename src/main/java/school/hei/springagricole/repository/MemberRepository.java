@@ -1,11 +1,10 @@
 package school.hei.springagricole.repository;
 
-
 import org.springframework.stereotype.Repository;
 import school.hei.springagricole.config.DataSource;
-import school.hei.springagricole.entity.Gender;
+import school.hei.springagricole.entity.enums.Gender;
 import school.hei.springagricole.entity.Member;
-import school.hei.springagricole.entity.MemberOccupation;
+import school.hei.springagricole.entity.enums.MemberOccupation;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -26,20 +25,23 @@ public class MemberRepository {
     public Optional<Member> findById(String id) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT * FROM member WHERE id = ?")) {
+                "SELECT id, first_name, last_name, birth_date, gender, address, " +
+                        "profession, phone_number, email, occupation, collectivity_id, admission_date " +
+                        "FROM member WHERE id = ?")) {
 
             stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
                 Member member = mapRowToMember(rs);
+                // On passe la connexion existante pour éviter d'en ouvrir une nouvelle inutilement
                 member.setReferees(findRefereesByMemberId(conn, member.getId()));
                 return Optional.of(member);
             }
             return Optional.empty();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la recherche du membre avec ID: " + id, e);
+            throw new RuntimeException("Error searching for member with ID: " + id, e);
         } finally {
             dataSource.closeConnection(conn);
         }
@@ -68,7 +70,7 @@ public class MemberRepository {
                 stmt.setString(5, member.getGender().name());
                 stmt.setString(6, member.getAddress());
                 stmt.setString(7, member.getProfession());
-                stmt.setLong(8, member.getPhoneNumber());
+                stmt.setLong(8, member.getPhoneNumber()); // Utilisation de setLong pour BIGINT
                 stmt.setString(9, member.getEmail());
                 stmt.setString(10, member.getOccupation().name());
                 stmt.setString(11, member.getCollectivityId());
@@ -90,16 +92,14 @@ public class MemberRepository {
             }
 
             conn.commit();
-
             member.setAdmissionDate(today);
-
             return member;
 
         } catch (SQLException e) {
             try { conn.rollback(); } catch (SQLException ex) {
-                throw new RuntimeException("Erreur critique lors du rollback membre", ex);
+                throw new RuntimeException("Critical error during member rollback", ex);
             }
-            throw new RuntimeException("Erreur lors de la sauvegarde du membre", e);
+            throw new RuntimeException("Error when saving the member", e);
         } finally {
             try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
             dataSource.closeConnection(conn);
@@ -121,6 +121,7 @@ public class MemberRepository {
         member.setAddress(rs.getString("address"));
         member.setProfession(rs.getString("profession"));
         member.setPhoneNumber(rs.getInt("phone_number"));
+
         member.setEmail(rs.getString("email"));
 
         String occupationStr = rs.getString("occupation");
@@ -137,7 +138,9 @@ public class MemberRepository {
     private List<Member> findRefereesByMemberId(Connection conn, String memberId) throws SQLException {
         List<Member> referees = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT m.* FROM member m " +
+                "SELECT m.id, m.first_name, m.last_name, m.birth_date, m.gender, m.address, " +
+                        "m.profession, m.phone_number, m.email, m.occupation, m.collectivity_id, m.admission_date " +
+                        "FROM member m " +
                         "JOIN member_referee mr ON m.id = mr.referee_id " +
                         "WHERE mr.member_id = ?")) {
             stmt.setString(1, memberId);

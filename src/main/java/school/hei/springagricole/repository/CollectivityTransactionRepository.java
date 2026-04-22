@@ -3,7 +3,7 @@ package school.hei.springagricole.repository;
 import org.springframework.stereotype.Repository;
 import school.hei.springagricole.config.DataSource;
 import school.hei.springagricole.entity.CollectivityTransaction;
-import school.hei.springagricole.entity.PaymentMode;
+import school.hei.springagricole.entity.enums.PaymentMode;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -48,7 +48,7 @@ public class CollectivityTransactionRepository {
             return transaction;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la sauvegarde de la transaction", e);
+            throw new RuntimeException("Error while saving the transaction", e);
         } finally {
             dataSource.closeConnection(conn);
         }
@@ -80,7 +80,7 @@ public class CollectivityTransactionRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException(
-                    "Erreur chargement transactions collectivité=" + collectivityId, e);
+                    "Error loading community transactions=" + collectivityId, e);
         } finally {
             dataSource.closeConnection(conn);
         }

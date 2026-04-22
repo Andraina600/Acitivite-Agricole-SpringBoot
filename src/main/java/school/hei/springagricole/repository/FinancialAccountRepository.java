@@ -3,6 +3,8 @@ package school.hei.springagricole.repository;
 import org.springframework.stereotype.Repository;
 import school.hei.springagricole.config.DataSource;
 import school.hei.springagricole.entity.*;
+import school.hei.springagricole.entity.enums.Bank;
+import school.hei.springagricole.entity.enums.MobileBankingService;
 import school.hei.springagricole.exception.BadRequestException;
 
 import java.math.BigDecimal;
@@ -32,12 +34,13 @@ public class FinancialAccountRepository {
 
             if ("CASH".equals(account.getAccountType())) {
                 if (cashExistsForCollectivity(conn, account.getCollectivityId())) {
-                    throw new BadRequestException("La collectivité possède déjà une caisse");
+                    throw new BadRequestException("The collectivity already has a fund");
                 }
             }
 
             try (PreparedStatement stmt = conn.prepareStatement(
-                    "INSERT INTO financial_account (id, collectivity_id, account_type, balance) VALUES (?, ?, ?, ?)")) {
+                    "INSERT INTO financial_account (id, collectivity_id, account_type, balance) " +
+                            "VALUES (?, ?, ?, ?)")) {
                 stmt.setString(1, account.getId());
                 stmt.setString(2, account.getCollectivityId());
                 stmt.setString(3, account.getAccountType());
@@ -53,15 +56,15 @@ public class FinancialAccountRepository {
 
             conn.commit();
             return findById(account.getId()).orElseThrow(
-                    () -> new RuntimeException("Compte non trouvé après sauvegarde"));
+                    () -> new RuntimeException("Account not found after backup"));
 
         } catch (BadRequestException e) {
             throw e;
         } catch (SQLException e) {
             try { conn.rollback(); } catch (SQLException ex) {
-                throw new RuntimeException("Erreur critique rollback financial_account", ex);
+                throw new RuntimeException("Critical error rollback financial_account", ex);
             }
-            throw new RuntimeException("Erreur lors de la sauvegarde du compte financier", e);
+            throw new RuntimeException("Error while saving the financial account", e);
         } finally {
             try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
             dataSource.closeConnection(conn);
@@ -79,7 +82,7 @@ public class FinancialAccountRepository {
             }
             return Optional.empty();
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur chargement compte id=" + id, e);
+            throw new RuntimeException("Error loading account id=" + id, e);
         } finally {
             dataSource.closeConnection(conn);
         }
@@ -88,7 +91,8 @@ public class FinancialAccountRepository {
     public List<FinancialAccount> findByCollectivityId(String collectivityId) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT id, collectivity_id, account_type, balance FROM financial_account WHERE collectivity_id = ?")) {
+                "SELECT id, collectivity_id, account_type, balance FROM financial_account " +
+                        "WHERE collectivity_id = ?")) {
             stmt.setString(1, collectivityId);
             ResultSet rs = stmt.executeQuery();
             List<FinancialAccount> accounts = new ArrayList<>();
@@ -97,7 +101,7 @@ public class FinancialAccountRepository {
             }
             return accounts;
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur chargement comptes collectivité=" + collectivityId, e);
+            throw new RuntimeException("Error loading collectivity accounts=" + collectivityId, e);
         } finally {
             dataSource.closeConnection(conn);
         }
@@ -106,7 +110,7 @@ public class FinancialAccountRepository {
     private boolean cashExistsForCollectivity(Connection conn, String collectivityId)
             throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT 1 FROM financial_account " +
+                "SELECT id FROM financial_account " +
                         "WHERE collectivity_id = ? AND account_type = 'CASH' " +
                         "LIMIT 1")) {
             stmt.setString(1, collectivityId);
@@ -117,7 +121,8 @@ public class FinancialAccountRepository {
 
     private void saveBankDetail(Connection conn, BankAccount account) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(
-                "INSERT INTO bank_account_detail (id, holder_name, bank_name, bank_code, bank_branch_code, bank_account_number, bank_account_key) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+                "INSERT INTO bank_account_detail (id, holder_name, bank_name, bank_code, " +
+                        "bank_branch_code, bank_account_number, bank_account_key) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             stmt.setString(1, account.getId());
             stmt.setString(2, account.getHolderName());
             stmt.setString(3, account.getBankName().name());
@@ -131,7 +136,8 @@ public class FinancialAccountRepository {
 
     private void saveMobileDetail(Connection conn, MobileBankingAccount account) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(
-                "INSERT INTO mobile_money_account_detail (id, holder_name, mobile_banking_service, mobile_number) VALUES (?, ?, ?, ?)")) {
+                "INSERT INTO mobile_money_account_detail (id, holder_name, mobile_banking_service, mobile_number) " +
+                        "VALUES (?, ?, ?, ?)")) {
             stmt.setString(1, account.getId());
             stmt.setString(2, account.getHolderName());
             stmt.setString(3, account.getMobileBankingService().name());
@@ -150,14 +156,15 @@ public class FinancialAccountRepository {
             case "CASH" -> new CashAccount(id, collectivityId, balance);
             case "BANK" -> loadBankAccount(conn, id, collectivityId, balance);
             case "MOBILE" -> loadMobileAccount(conn, id, collectivityId, balance);
-            default -> throw new RuntimeException("Type de compte inconnu : " + accountType);
+            default -> throw new RuntimeException("Unknown account type: " + accountType);
         };
     }
 
     private BankAccount loadBankAccount(Connection conn, String id, String collectivityId, BigDecimal balance)
             throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT holder_name, bank_name, bank_code, bank_branch_code, bank_account_number, bank_account_key FROM bank_account_detail WHERE id = ?")) {
+                "SELECT holder_name, bank_name, bank_code, bank_branch_code, bank_account_number, bank_account_key " +
+                        "FROM bank_account_detail WHERE id = ?")) {
             stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -178,7 +185,8 @@ public class FinancialAccountRepository {
     private MobileBankingAccount loadMobileAccount(Connection conn, String id, String collectivityId, BigDecimal balance)
             throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT holder_name, mobile_banking_service, mobile_number FROM mobile_money_account_detail WHERE id = ?")) {
+                "SELECT holder_name, mobile_banking_service, mobile_number " +
+                        "FROM mobile_money_account_detail WHERE id = ?")) {
             stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -201,7 +209,7 @@ public class FinancialAccountRepository {
             stmt.setString(2, accountId);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur mise à jour solde compte id=" + accountId, e);
+            throw new RuntimeException("Error updated balance account id=" + accountId, e);
         } finally {
             dataSource.closeConnection(conn);
         }

@@ -2,6 +2,8 @@ package school.hei.springagricole.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import school.hei.springagricole.entity.enums.ActivityStatus;
+import school.hei.springagricole.entity.enums.Frequency;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

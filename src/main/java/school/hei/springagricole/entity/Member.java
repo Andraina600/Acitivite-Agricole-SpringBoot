@@ -2,6 +2,8 @@ package school.hei.springagricole.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import school.hei.springagricole.entity.enums.Gender;
+import school.hei.springagricole.entity.enums.MemberOccupation;
 
 import java.time.LocalDate;
 import java.util.List;

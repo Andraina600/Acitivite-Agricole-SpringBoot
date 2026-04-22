@@ -1,4 +1,4 @@
-package school.hei.springagricole.entity;
+package school.hei.springagricole.entity.enums;
 
 public enum Frequency {
     WEEKLY,

@@ -2,8 +2,8 @@ package school.hei.springagricole.repository;
 
 import org.springframework.stereotype.Repository;
 import school.hei.springagricole.config.DataSource;
-import school.hei.springagricole.entity.ActivityStatus;
-import school.hei.springagricole.entity.Frequency;
+import school.hei.springagricole.entity.enums.ActivityStatus;
+import school.hei.springagricole.entity.enums.Frequency;
 import school.hei.springagricole.entity.MembershipFee;
 
 import java.sql.*;
@@ -53,9 +53,9 @@ public class MembershipFeeRepository {
 
         } catch (SQLException e) {
             try { conn.rollback(); } catch (SQLException ex) {
-                throw new RuntimeException("Erreur critique rollback membership_fee", ex);
+                throw new RuntimeException("Critical error rollback membership_fee", ex);
             }
-            throw new RuntimeException("Erreur lors de la sauvegarde des cotisations", e);
+            throw new RuntimeException("Error when saving contributions", e);
         } finally {
             try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
             dataSource.closeConnection(conn);
@@ -65,8 +65,8 @@ public class MembershipFeeRepository {
     public List<MembershipFee> findByCollectivityId(String collectivityId) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT id, collectivity_id, label, amount, frequency, eligible_from, status" +
-                        " FROM membership_fee WHERE collectivity_id = ? ORDER BY eligible_from")) {
+                "SELECT id, collectivity_id, label, amount, frequency, eligible_from, status " +
+                        "FROM membership_fee WHERE collectivity_id = ? ORDER BY eligible_from")) {
 
             stmt.setString(1, collectivityId);
             ResultSet rs = stmt.executeQuery();
@@ -77,7 +77,7 @@ public class MembershipFeeRepository {
             return fees;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors du chargement des cotisations", e);
+            throw new RuntimeException("Error when uploading contributions", e);
         } finally {
             dataSource.closeConnection(conn);
         }
@@ -86,8 +86,8 @@ public class MembershipFeeRepository {
     public Optional<MembershipFee> findById(String id) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT id, collectivity_id, label, amount, frequency, eligible_from, status" +
-                        " FROM membership_fee WHERE id = ?")) {
+                "SELECT id, collectivity_id, label, amount, frequency, eligible_from, status " +
+                        "FROM membership_fee WHERE id = ?")) {
 
             stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
@@ -97,7 +97,7 @@ public class MembershipFeeRepository {
             return Optional.empty();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors du chargement de la cotisation id=" + id, e);
+            throw new RuntimeException("Error while loading the contribution id=" + id, e);
         } finally {
             dataSource.closeConnection(conn);
         }
