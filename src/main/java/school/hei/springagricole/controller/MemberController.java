@@ -2,6 +2,7 @@ package school.hei.springagricole.controller;
 
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import school.hei.springagricole.entity.CreateMember;
 import school.hei.springagricole.entity.Member;
@@ -19,8 +20,10 @@ public class MemberController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public List<Member> createMembers(@RequestBody List<CreateMember> createMembers) {
-        return memberService.createMembers(createMembers);
+    public ResponseEntity<List<Member>> createMembers(@RequestBody List<CreateMember> createMembers) {
+        List<Member> members = memberService.createMembers(createMembers);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(members);
     }
 }
