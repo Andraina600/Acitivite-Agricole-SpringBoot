@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/members")
-public class MemberPaymentController {
+public class    MemberPaymentController {
 
     private final MemberPaymentService memberPaymentService;
 

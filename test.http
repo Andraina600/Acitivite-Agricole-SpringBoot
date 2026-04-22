@@ -2,7 +2,7 @@
 @baseUrl = http://localhost:8080
 
 ### Remplace cet UUID par celui retourné après POST /collectivities
-@collectivityId = 0e49ff72-5efd-45d9-b5b8-2dd6978e7254
+@collectivityId = 1113767b-9f61-4d63-9562-a7e635642c56
 
 ### ================================================================
 ### POST /collectivities — TEST 1 : Création réussie (201)
@@ -167,4 +167,73 @@ Content-Type: application/json
 ]
 
 ###
-GET {{baseUrl}}/collectivities/04e32a51-99dd-4bff-babd-6fa6792fcb63/membershipFees"
+
+### 1. Créer plusieurs cotisations pour une collectivité
+# Test du POST qui accepte une liste (List<MembershipFee>)
+POST {{baseUrl}}/collectivities/{{collectivityId}}/membershipFees
+Content-Type: application/json
+
+[
+  {
+    "label": "Cotisation Annuelle 2026",
+    "amount": 50000,
+    "frequency": "ANNUALLY",
+    "eligibleFrom": "2026-01-01",
+    "status": "ACTIVE"
+  },
+  {
+    "label": "Frais d'adhésion mensuels",
+    "amount": 5000,
+    "frequency": "MONTHLY",
+    "eligibleFrom": "2026-04-21",
+    "status": "ACTIVE"
+  }
+]
+
+### 2. Récupérer toutes les cotisations d'une collectivité
+# Test du GET par ID de collectivité
+GET {{baseUrl}}/collectivities/{{collectivityId}}/membershipFees
+Accept: application/json
+
+---
+
+### 3. Créer une cotisation avec un statut INACTIF (Cas de test)
+# Pour vérifier si ton service gère bien les différents états
+POST {{baseUrl}}/collectivities/{{collectivityId}}/membershipFees
+Content-Type: application/json
+
+[
+  {
+    "label": "Ancienne Cotisation 2025",
+    "amount": 45000,
+    "frequency": "ANNUALLY",
+    "eligibleFrom": "2025-01-01",
+    "status": "INACTIVE"
+  }
+]
+
+### 4. Test d'une collectivité inexistante ou vide
+# Pour vérifier que ton service renvoie bien une liste vide [] ou une 404
+GET {{baseUrl}}/collectivities/{{collectivityId}}/membershipFees
+Accept: application/json
+
+### Créer des paiements pour un membre
+POST http://localhost:8080/members/M1/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 10000,
+    "membershipFeeId": "9782050f-8caf-4dc0-b465-e9379681b46e",
+    "accountCreditedId": "compte-test-1",
+    "paymentMode": "CASH"
+  }
+]
+
+### Récupérer les transactions de la collectivité "COLL-01" pour le mois d'avril
+GET http://localhost:8080/collectivities/{{collectivityId}}/transactions?from=2026-04-01&to=2026-04-30
+Accept: application/json
+
+### Test d'erreur : Date 'from' après 'to' (Doit retourner une 400 via ton service)
+GET http://localhost:8080/collectivities/{{collectivityId}}/transactions?from=2026-12-31&to=2026-01-01
+Accept: application/json
