@@ -1,8 +1,13 @@
 package school.hei.springagricole.entity;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDate;
 import java.util.List;
 
+@Setter
+@Getter
 public class Member {
     private String id;
     private String firstName;
@@ -16,7 +21,6 @@ public class Member {
     private MemberOccupation occupation;
     private List<Member> referees;
 
-    // Attributs purement métier (non exposés directement par l'API mais utiles en base)
     private LocalDate admissionDate;
     private String collectivityId;
 
@@ -38,107 +42,4 @@ public class Member {
 
     public Member() {}
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getBirthDate() {
-        return birthDate;
-    }
-
-    public void setBirthDate(String birthDate) {
-        this.birthDate = birthDate;
-    }
-
-    public Gender getGender() {
-        return gender;
-    }
-
-    public void setGender(Gender gender) {
-        this.gender = gender;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getProfession() {
-        return profession;
-    }
-
-    public void setProfession(String profession) {
-        this.profession = profession;
-    }
-
-    public Integer getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(Integer phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public MemberOccupation getOccupation() {
-        return occupation;
-    }
-
-    public void setOccupation(MemberOccupation occupation) {
-        this.occupation = occupation;
-    }
-
-    public List<Member> getReferees() {
-        return referees;
-    }
-
-    public void setReferees(List<Member> referees) {
-        this.referees = referees;
-    }
-
-    public LocalDate getAdmissionDate() {
-        return admissionDate;
-    }
-
-    public void setAdmissionDate(LocalDate admissionDate) {
-        this.admissionDate = admissionDate;
-    }
-
-    public String getCollectivityId() {
-        return collectivityId;
-    }
-
-    public void setCollectivityId(String collectivityId) {
-        this.collectivityId = collectivityId;
-    }
 }

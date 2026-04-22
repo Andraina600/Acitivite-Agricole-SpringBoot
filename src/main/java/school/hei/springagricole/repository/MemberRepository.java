@@ -50,14 +50,12 @@ public class MemberRepository {
             member.setId(UUID.randomUUID().toString());
         }
 
-        // On fixe la date d'admission au jour de la sauvegarde
         LocalDate today = LocalDate.now();
 
         Connection conn = dataSource.getConnection();
         try {
             conn.setAutoCommit(false);
 
-            // 1. Insertion du membre
             try (PreparedStatement stmt = conn.prepareStatement(
                     "INSERT INTO member (id, first_name, last_name, birth_date, gender, address, " +
                             "profession, phone_number, email, occupation, collectivity_id, admission_date) " +
@@ -79,7 +77,6 @@ public class MemberRepository {
                 stmt.executeUpdate();
             }
 
-            // 2. Insertion des parrains dans member_referee
             if (member.getReferees() != null && !member.getReferees().isEmpty()) {
                 try (PreparedStatement stmtRef = conn.prepareStatement(
                         "INSERT INTO member_referee (member_id, referee_id) VALUES (?, ?)")) {
@@ -94,7 +91,6 @@ public class MemberRepository {
 
             conn.commit();
 
-            // On met à jour l'objet en mémoire avec la date d'admission
             member.setAdmissionDate(today);
 
             return member;
