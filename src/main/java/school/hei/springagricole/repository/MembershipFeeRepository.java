@@ -81,6 +81,26 @@ public class MembershipFeeRepository {
         }
     }
 
+    public Optional<MembershipFee> findById(String id) {
+        Connection conn = dataSource.getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT id, collectivity_id, label, amount, frequency, eligible_from, status" +
+                        " FROM membership_fee WHERE id = ?")) {
+
+            stmt.setString(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return Optional.of(mapRow(rs));
+            }
+            return Optional.empty();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors du chargement de la cotisation id=" + id, e);
+        } finally {
+            dataSource.closeConnection(conn);
+        }
+    }
+
     private MembershipFee mapRow(ResultSet rs) throws SQLException {
         MembershipFee fee = new MembershipFee();
         fee.setId(rs.getString("id"));
