@@ -5,10 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import school.hei.springagricole.entity.Collectivity;
 import school.hei.springagricole.entity.CreateCollectivity;
-import school.hei.springagricole.exception.BadRequestException;
 import school.hei.springagricole.service.CollectivityService;
 
-import java.sql.SQLException;
 import java.util.List;
 
 @RestController
@@ -21,9 +19,17 @@ public class CollectivityController {
     }
 
     @PostMapping
-
     public ResponseEntity<List<Collectivity>> createCollectivities(@RequestBody List<CreateCollectivity> requests) {
         List<Collectivity> collectivities = collectivityService.createCollectivities(requests);
-
+        try {
+            if(!collectivities.isEmpty()){
+                return ResponseEntity
+                        .status(HttpStatus.CREATED)
+                        .body(collectivities);
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
