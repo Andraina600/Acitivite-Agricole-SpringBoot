@@ -1,0 +1,167 @@
+### Base URL
+@baseUrl = http://localhost:8080
+
+### Remplace cet UUID par celui retourné après POST /collectivities
+@collectivityId = 0e49ff72-5efd-45d9-b5b8-2dd6978e7254
+
+### ================================================================
+### POST /collectivities — TEST 1 : Création réussie (201)
+###   ✅ federationApproval = true
+###   ✅ 10 membres dont 5 avec > 6 mois d'ancienneté
+###   ✅ structure complète
+### ================================================================
+POST {{baseUrl}}/collectivities
+Content-Type: application/json
+
+[
+  {
+    "location": "Antananarivo",
+    "federationApproval": true,
+    "members": [
+      "11111111-1111-1111-1111-111111111111",
+      "22222222-2222-2222-2222-222222222222",
+      "33333333-3333-3333-3333-333333333333",
+      "44444444-4444-4444-4444-444444444444",
+      "55555555-5555-5555-5555-555555555555",
+      "66666666-6666-6666-6666-666666666666",
+      "77777777-7777-7777-7777-777777777777",
+      "88888888-8888-8888-8888-888888888888",
+      "99999999-9999-9999-9999-999999999999",
+      "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    ],
+    "structure": {
+      "president":     "11111111-1111-1111-1111-111111111111",
+      "vicePresident": "22222222-2222-2222-2222-222222222222",
+      "treasurer":     "33333333-3333-3333-3333-333333333333",
+      "secretary":     "44444444-4444-4444-4444-444444444444"
+    }
+  }
+]
+
+###
+### ================================================================
+### POST /collectivities — TEST 2 : Sans approbation (400)
+###   ❌ federationApproval = false
+### ================================================================
+POST {{baseUrl}}/collectivities
+Content-Type: application/json
+
+[
+  {
+    "location": "Fianarantsoa",
+    "federationApproval": false,
+    "members": [
+      "11111111-1111-1111-1111-111111111111",
+      "22222222-2222-2222-2222-222222222222",
+      "33333333-3333-3333-3333-333333333333",
+      "44444444-4444-4444-4444-444444444444",
+      "55555555-5555-5555-5555-555555555555",
+      "66666666-6666-6666-6666-666666666666",
+      "77777777-7777-7777-7777-777777777777",
+      "88888888-8888-8888-8888-888888888888",
+      "99999999-9999-9999-9999-999999999999",
+      "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    ],
+    "structure": {
+      "president":     "11111111-1111-1111-1111-111111111111",
+      "vicePresident": "22222222-2222-2222-2222-222222222222",
+      "treasurer":     "33333333-3333-3333-3333-333333333333",
+      "secretary":     "44444444-4444-4444-4444-444444444444"
+    }
+  }
+]
+
+###
+### ================================================================
+### POST /collectivities — TEST 3 : Moins de 10 membres (400)
+###   ❌ seulement 3 membres
+### ================================================================
+POST {{baseUrl}}/collectivities
+Content-Type: application/json
+
+[
+  {
+    "location": "Toamasina",
+    "federationApproval": true,
+    "members": [
+      "11111111-1111-1111-1111-111111111111",
+      "22222222-2222-2222-2222-222222222222",
+      "33333333-3333-3333-3333-333333333333"
+    ],
+    "structure": {
+      "president":     "11111111-1111-1111-1111-111111111111",
+      "vicePresident": "22222222-2222-2222-2222-222222222222",
+      "treasurer":     "33333333-3333-3333-3333-333333333333",
+      "secretary":     "44444444-4444-4444-4444-444444444444"
+    }
+  }
+]
+
+###
+### ================================================================
+### PATCH /collectivities/{id}/identity — TEST 4 : Attribution réussie (200)
+### ⚠️  Remplace @collectivityId par l'UUID retourné dans TEST 1
+###   ✅ number et name uniques, jamais assignés
+### ================================================================
+PATCH {{baseUrl}}/collectivities/{{collectivityId}}/identity
+Content-Type: application/json
+
+{
+  "number": 1,
+  "name": "Collectivité Agricole Analamanga"
+}
+
+###
+### ================================================================
+### PATCH /collectivities/{id}/identity — TEST 5 : Déjà assigné (400)
+### Relancer après TEST 4 sur le même UUID
+###   ❌ number et name déjà attribués → ne peut plus être changé
+### ================================================================
+PATCH {{baseUrl}}/collectivities/{{collectivityId}}/identity
+Content-Type: application/json
+
+{
+  "number": 2,
+  "name": "Collectivité Agricole Vakinankaratra"
+}
+
+###
+### ================================================================
+### PATCH /collectivities/{id}/identity — TEST 6 : Collectivité introuvable (404)
+###   ❌ UUID inexistant en base
+### ================================================================
+PATCH {{baseUrl}}/collectivities/00000000-0000-0000-0000-000000000000/identity
+Content-Type: application/json
+
+{
+  "number": 3,
+  "name": "Collectivité Fantôme"
+}
+
+###
+### ================================================================
+### POST /members — TEST 7 : Admission réussie (201)
+### ⚠️  Les parrains bbbbbbbb et cccccccc doivent être membres
+###    de la collectivité créée dans TEST 1
+###   ✅ paiements OK, infos complètes, 2 parrains SENIOR internes
+### ================================================================
+POST {{baseUrl}}/members
+Content-Type: application/json
+
+[
+  {
+    "firstName": "Toky",
+    "lastName": "Andriamananoro",
+    "birthDate": "2002-05-20",
+    "gender": "MALE",
+    "address": "Lot II N 45 Ankatso",
+    "profession": "Étudiant en Agronomie",
+    "phoneNumber": 345678901,
+    "email": "toky.niry@gmail.com",
+    "occupation": "JUNIOR",
+    "collectivityIdentifier": "0e49ff72-5efd-45d9-b5b8-2dd6978e7254",
+    "referees": ["M1", "M3"],
+    "registrationFeePaid": true,
+    "membershipDuesPaid": true
+  }
+]

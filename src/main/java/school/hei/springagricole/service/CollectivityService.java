@@ -92,11 +92,9 @@ public class CollectivityService {
     }
 
     public Collectivity assignIdentity(String collectivityId, CollectivityIdentity identity) {
-
         Collectivity collectivity = collectivityRepository.findById(collectivityId)
                 .orElseThrow(() -> new NotFoundException(
                         "Collectivity not found with ID: " + collectivityId));
-
         if (collectivity.getNumber() != null || collectivity.getName() != null) {
             throw new BadRequestException(
                     "Collectivity identity (number and name) has already been assigned " +
