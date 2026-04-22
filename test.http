@@ -165,3 +165,6 @@ Content-Type: application/json
     "membershipDuesPaid": true
   }
 ]
+
+###
+GET {{baseUrl}}/collectivities/04e32a51-99dd-4bff-babd-6fa6792fcb63/membershipFees"

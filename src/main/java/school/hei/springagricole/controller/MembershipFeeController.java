@@ -1,12 +1,8 @@
 package school.hei.springagricole.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import school.hei.springagricole.entity.MembershipFee;
 import school.hei.springagricole.service.MembershipFeeService;
 
@@ -30,5 +26,14 @@ public class MembershipFeeController {
                 .body(membershipFees);
     }
 
-
+    @PostMapping
+    public ResponseEntity<List<MembershipFee>> create(
+            @PathVariable("id") String id,
+            @RequestBody List<MembershipFee> membershipFee
+    ){
+        List<MembershipFee> fees = membershipFeeService.create(id,  membershipFee);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(fees);
+    }
 }
