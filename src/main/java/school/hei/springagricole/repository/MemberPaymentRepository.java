@@ -54,5 +54,35 @@ public class MemberPaymentRepository {
         }
     }
 
+    public List<MemberPayment> findByMemberId(String memberId) {
+        Connection conn = dataSource.getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT id, member_id, membership_fee_id, account_credited_id, amount, payment_mode ,creation_date" +
+                        " FROM member_payment WHERE member_id = ? ORDER BY creation_date DESC")) {
+            stmt.setString(1, memberId);
+            ResultSet rs = stmt.executeQuery();
+            List<MemberPayment> payments = new ArrayList<>();
+            while (rs.next()) {
+                payments.add(mapRow(rs));
+            }
+            return payments;
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur chargement paiements membre id=" + memberId, e);
+        } finally {
+            dataSource.closeConnection(conn);
+        }
+    }
 
+    private MemberPayment mapRow(ResultSet rs) throws SQLException {
+        MemberPayment p = new MemberPayment();
+        p.setId(rs.getString("id"));
+        p.setMemberId(rs.getString("member_id"));
+        p.setMembershipFeeId(rs.getString("membership_fee_id"));
+        p.setAccountCreditedId(rs.getString("account_credited_id"));
+        p.setAmount(rs.getBigDecimal("amount"));
+        p.setPaymentMode(PaymentMode.valueOf(rs.getString("payment_mode")));
+        Date d = rs.getDate("creation_date");
+        if (d != null) p.setCreationDate(d.toLocalDate());
+        return p;
+    }
 }
