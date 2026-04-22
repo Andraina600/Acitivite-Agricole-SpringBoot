@@ -87,6 +87,34 @@ public class CollectivityRepository {
         }
     }
 
+    public Collectivity assignIdentity(String collectivityId, Integer number, String name) {
+        Connection conn = dataSource.getConnection();
+        try {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "UPDATE collectivity SET number = ?, name = ? WHERE id = ?")) {
+                stmt.setInt(1, number);
+                stmt.setString(2, name);
+                stmt.setString(3, collectivityId);
+                stmt.executeUpdate();
+            }
+
+            conn.commit();
+
+            return findById(collectivityId).orElseThrow(() ->
+                    new RuntimeException("Collectivity not found after identity assignment"));
+
+        } catch (SQLException e) {
+            try { conn.rollback(); } catch (SQLException ex) {
+                throw new RuntimeException("Erreur critique lors du rollback identity", ex);
+            }
+            throw new RuntimeException("Erreur lors de l'attribution de l'identité", e);
+        } finally {
+            try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            dataSource.closeConnection(conn);
+        }
+    }
 
     public Optional<Collectivity> findById(String id) {
         Connection conn = dataSource.getConnection();
