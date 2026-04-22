@@ -15,7 +15,6 @@ import java.util.Optional;
 
 @Repository
 public class CollectivityRepository {
-
     private final DataSource dataSource;
     private final MemberRepository memberRepository;
 
@@ -30,10 +29,21 @@ public class CollectivityRepository {
             conn.setAutoCommit(false);
 
             try (PreparedStatement stmt = conn.prepareStatement(
-                    "INSERT INTO collectivity (id, location, creation_date) VALUES (?, ?, ?)")) {
+                    "INSERT INTO collectivity (id, number, name, location, creation_date) " +
+                            "VALUES (?, ?, ?, ?, ?)")) {
                 stmt.setString(1, collectivity.getId());
-                stmt.setString(2, collectivity.getLocation());
-                stmt.setDate(3, Date.valueOf(LocalDate.now()));
+                if (collectivity.getNumber() != null) {
+                    stmt.setInt(2, collectivity.getNumber());
+                } else {
+                    stmt.setNull(2, Types.INTEGER);
+                }
+                if (collectivity.getName() != null) {
+                    stmt.setString(3, collectivity.getName());
+                } else {
+                    stmt.setNull(3, Types.VARCHAR);
+                }
+                stmt.setString(4, collectivity.getLocation());
+                stmt.setDate(5, Date.valueOf(LocalDate.now()));
                 stmt.executeUpdate();
             }
 
@@ -56,10 +66,12 @@ public class CollectivityRepository {
                         stmt.setString(1, collectivity.getId());
                         stmt.setString(2, member.getId());
                         stmt.addBatch();
+                        member.setCollectivityId(collectivity.getId());
                     }
                     stmt.executeBatch();
                 }
             }
+            updateStructureMemberCollectivityId(collectivity);
 
             conn.commit();
             return collectivity;
@@ -75,6 +87,7 @@ public class CollectivityRepository {
         }
     }
 
+
     public Optional<Collectivity> findById(String id) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
@@ -86,12 +99,15 @@ public class CollectivityRepository {
             if (rs.next()) {
                 Collectivity collectivity = new Collectivity();
                 collectivity.setId(rs.getString("id"));
+
+                int number = rs.getInt("number");
+                collectivity.setNumber(rs.wasNull() ? null : number);
+
+                collectivity.setName(rs.getString("name"));
+
                 collectivity.setLocation(rs.getString("location"));
-
                 collectivity.setStructure(loadStructure(conn, id));
-
                 collectivity.setMembers(loadMembers(conn, id));
-
                 return Optional.of(collectivity);
             }
             return Optional.empty();
@@ -103,7 +119,18 @@ public class CollectivityRepository {
         }
     }
 
-    private CollectivityStructure loadStructure(Connection conn, String collectivityId) throws SQLException {
+    private void updateStructureMemberCollectivityId(Collectivity collectivity) {
+        CollectivityStructure s = collectivity.getStructure();
+        if (s == null) return;
+        String cid = collectivity.getId();
+        if (s.getPresident() != null)     s.getPresident().setCollectivityId(cid);
+        if (s.getVicePresident() != null) s.getVicePresident().setCollectivityId(cid);
+        if (s.getTreasurer() != null)     s.getTreasurer().setCollectivityId(cid);
+        if (s.getSecretary() != null)     s.getSecretary().setCollectivityId(cid);
+    }
+
+    private CollectivityStructure loadStructure(Connection conn, String collectivityId)
+            throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(
                 "SELECT * FROM collectivity_structure WHERE collectivity_id = ?")) {
             stmt.setString(1, collectivityId);
