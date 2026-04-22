@@ -25,4 +25,12 @@ public class CollectivityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(collectivities);
 
     }
+
+    @PatchMapping("/{id}/identity")
+    public ResponseEntity<Collectivity> assignIdentity(
+            @PathVariable String id,
+            @RequestBody CollectivityIdentity identity) {
+        Collectivity updated = collectivityService.assignIdentity(id, identity);
+        return ResponseEntity.ok(updated);
+    }
 }
