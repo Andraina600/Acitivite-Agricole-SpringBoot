@@ -5,12 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/**
- * Handler global pour convertir nos exceptions métier en réponses HTTP propres.
- *
- * IMPORTANT : Sans ce handler, Spring Boot peut parfois retourner des codes
- * inattendus (comme 418) au lieu des 400/404 attendus.
- */
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

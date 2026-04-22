@@ -9,6 +9,7 @@ import school.hei.springagricole.entity.Member;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -124,7 +125,7 @@ public class CollectivityRepository {
     }
 
     private List<Member> loadMembers(Connection conn, String collectivityId) throws SQLException {
-        List<Member> members = new java.util.ArrayList<>();
+        List<Member> members = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(
                 "SELECT id FROM member WHERE collectivity_id = ?")) {
             stmt.setString(1, collectivityId);
