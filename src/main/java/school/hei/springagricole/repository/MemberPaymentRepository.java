@@ -73,6 +73,24 @@ public class MemberPaymentRepository {
         }
     }
 
+    public Optional<MemberPayment> findById(String id) {
+        Connection conn = dataSource.getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT id, member_id, membership_fee_id, account_credited_id, amount, payment_mode ,creation_date" +
+                        " FROM member_payment WHERE id = ?")) {
+            stmt.setString(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return Optional.of(mapRow(rs));
+            }
+            return Optional.empty();
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur chargement paiement id=" + id, e);
+        } finally {
+            dataSource.closeConnection(conn);
+        }
+    }
+
     private MemberPayment mapRow(ResultSet rs) throws SQLException {
         MemberPayment p = new MemberPayment();
         p.setId(rs.getString("id"));
