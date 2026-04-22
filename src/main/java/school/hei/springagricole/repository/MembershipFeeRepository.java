@@ -1,5 +1,6 @@
 package school.hei.springagricole.repository;
 
+import org.springframework.stereotype.Repository;
 import school.hei.springagricole.config.DataSource;
 import school.hei.springagricole.entity.ActivityStatus;
 import school.hei.springagricole.entity.Frequency;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Repository
 public class MembershipFeeRepository {
     private final DataSource dataSource;
 
