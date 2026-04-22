@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-public class MembershipFree {
+public class MembershipFee {
     private String id;
     private String collectivityId;
     private String label;
@@ -17,7 +17,7 @@ public class MembershipFree {
     private LocalDate eligibleFrom;
     private ActivityStatus status;
 
-    public MembershipFree(String id, String collectivityId, String label, BigDecimal amount, Frequency frequency, LocalDate eligibleFrom, ActivityStatus status) {
+    public MembershipFee(String id, String collectivityId, String label, BigDecimal amount, Frequency frequency, LocalDate eligibleFrom, ActivityStatus status) {
         this.id = id;
         this.collectivityId = collectivityId;
         this.label = label;
@@ -27,5 +27,5 @@ public class MembershipFree {
         this.status = status;
     }
 
-    public MembershipFree() {}
+    public MembershipFee() {}
 }
