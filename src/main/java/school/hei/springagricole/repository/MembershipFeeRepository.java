@@ -60,5 +60,37 @@ public class MembershipFeeRepository {
         }
     }
 
+    public List<MembershipFee> findByCollectivityId(String collectivityId) {
+        Connection conn = dataSource.getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT id, collectivity_id, label, amount, frequency, eligible_from, status" +
+                        " FROM membership_fee WHERE collectivity_id = ? ORDER BY eligible_from")) {
 
+            stmt.setString(1, collectivityId);
+            ResultSet rs = stmt.executeQuery();
+            List<MembershipFee> fees = new ArrayList<>();
+            while (rs.next()) {
+                fees.add(mapRow(rs));
+            }
+            return fees;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors du chargement des cotisations", e);
+        } finally {
+            dataSource.closeConnection(conn);
+        }
+    }
+
+    private MembershipFee mapRow(ResultSet rs) throws SQLException {
+        MembershipFee fee = new MembershipFee();
+        fee.setId(rs.getString("id"));
+        fee.setCollectivityId(rs.getString("collectivity_id"));
+        fee.setLabel(rs.getString("label"));
+        fee.setAmount(rs.getBigDecimal("amount"));
+        fee.setFrequency(Frequency.valueOf(rs.getString("frequency")));
+        Date eligible = rs.getDate("eligible_from");
+        if (eligible != null) fee.setEligibleFrom(eligible.toLocalDate());
+        fee.setStatus(ActivityStatus.valueOf(rs.getString("status")));
+        return fee;
+    }
 }
