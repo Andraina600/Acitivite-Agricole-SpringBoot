@@ -2,10 +2,7 @@ package school.hei.springagricole.service;
 
 
 import org.springframework.stereotype.Service;
-import school.hei.springagricole.entity.Collectivity;
-import school.hei.springagricole.entity.CollectivityStructure;
-import school.hei.springagricole.entity.CreateCollectivity;
-import school.hei.springagricole.entity.Member;
+import school.hei.springagricole.entity.*;
 import school.hei.springagricole.exception.BadRequestException;
 import school.hei.springagricole.exception.NotFoundException;
 import school.hei.springagricole.repository.CollectivityRepository;
@@ -91,6 +88,35 @@ public class CollectivityService {
         }
 
         return result;
+    }
+
+    public Collectivity assignIdentity(String collectivityId, CollectivityIdentity identity) {
+
+        Collectivity collectivity = collectivityRepository.findById(collectivityId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Collectivity not found with ID: " + collectivityId));
+
+        if (collectivity.getNumber() != null || collectivity.getName() != null) {
+            throw new BadRequestException(
+                    "Collectivity identity (number and name) has already been assigned " +
+                            "and cannot be changed.");
+        }
+
+        if (collectivityRepository.existsByName(identity.getName())) {
+            throw new BadRequestException(
+                    "Collectivity name '" + identity.getName() + "' already exists.");
+        }
+
+        if (collectivityRepository.existsByNumber(identity.getNumber())) {
+            throw new BadRequestException(
+                    "Collectivity number '" + identity.getNumber() + "' already exists.");
+        }
+
+        return collectivityRepository.assignIdentity(
+                collectivityId,
+                identity.getNumber(),
+                identity.getName()
+        );
     }
 
     private Member resolveMember(String memberId) {

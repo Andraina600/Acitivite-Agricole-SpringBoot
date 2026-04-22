@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import school.hei.springagricole.entity.Collectivity;
+import school.hei.springagricole.entity.CollectivityIdentity;
 import school.hei.springagricole.entity.CreateCollectivity;
 import school.hei.springagricole.service.CollectivityService;
 
