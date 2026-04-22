@@ -74,7 +74,8 @@ public class CollectivityRepository {
             updateStructureMemberCollectivityId(collectivity);
 
             conn.commit();
-            return collectivity;
+            return findById(collectivity.getId()).orElseThrow(() ->
+                    new RuntimeException("Collectivity not found after save"));
 
         } catch (SQLException e) {
             try { conn.rollback(); } catch (SQLException ex) {

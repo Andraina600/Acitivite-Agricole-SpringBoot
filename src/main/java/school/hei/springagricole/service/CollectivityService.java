@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 @Service
 public class CollectivityService {
 
@@ -80,6 +79,8 @@ public class CollectivityService {
 
             Collectivity collectivity = new Collectivity();
             collectivity.setId(UUID.randomUUID().toString());
+            collectivity.setNumber(null);
+            collectivity.setName(null);
             collectivity.setLocation(req.getLocation());
             collectivity.setStructure(structure);
             collectivity.setMembers(collectivityMembers);

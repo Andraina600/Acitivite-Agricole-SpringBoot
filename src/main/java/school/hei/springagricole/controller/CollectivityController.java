@@ -23,7 +23,6 @@ public class CollectivityController {
     public ResponseEntity<List<Collectivity>> createCollectivities(@RequestBody List<CreateCollectivity> requests) {
         List<Collectivity> collectivities = collectivityService.createCollectivities(requests);
         return ResponseEntity.status(HttpStatus.CREATED).body(collectivities);
-
     }
 
     @PatchMapping("/{id}/identity")
