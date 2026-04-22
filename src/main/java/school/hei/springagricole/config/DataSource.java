@@ -16,7 +16,7 @@ public class DataSource {
                     System.getenv("PASSWORD")
             );
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur de connexion à la base de données", e);
+            throw new RuntimeException("Database connection error", e);
         }
     }
 
