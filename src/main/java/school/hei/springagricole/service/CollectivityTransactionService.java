@@ -38,14 +38,14 @@ public class CollectivityTransactionService {
 
         collectivityRepository.findById(collectivityId)
                 .orElseThrow(() -> new NotFoundException(
-                        "Collectivité non trouvée : " + collectivityId));
+                        "Collectivity not found: " + collectivityId));
 
         if (from == null || to == null) {
-            throw new BadRequestException("Les paramètres 'from' et 'to' sont obligatoires");
+            throw new BadRequestException("Parameters 'from' and 'to' are mandatory");
         }
         if (from.isAfter(to)) {
             throw new BadRequestException(
-                    "La date 'from' ne peut pas être postérieure à la date 'to'");
+                    "The 'from' date cannot be after the 'to' date");
         }
 
         List<CollectivityTransaction> transactions =
