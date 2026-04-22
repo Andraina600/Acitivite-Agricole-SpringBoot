@@ -21,15 +21,7 @@ public class CollectivityController {
     @PostMapping
     public ResponseEntity<List<Collectivity>> createCollectivities(@RequestBody List<CreateCollectivity> requests) {
         List<Collectivity> collectivities = collectivityService.createCollectivities(requests);
-        try {
-            if(!collectivities.isEmpty()){
-                return ResponseEntity
-                        .status(HttpStatus.CREATED)
-                        .body(collectivities);
-            }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(collectivities);
+
     }
 }
