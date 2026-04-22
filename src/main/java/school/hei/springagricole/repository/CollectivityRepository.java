@@ -116,6 +116,40 @@ public class CollectivityRepository {
         }
     }
 
+    public boolean existsByName(String name) {
+        Connection conn = dataSource.getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT COUNT(*) FROM collectivity WHERE name = ?")) {
+            stmt.setString(1, name);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+            return false;
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la vérification du nom", e);
+        } finally {
+            dataSource.closeConnection(conn);
+        }
+    }
+
+    public boolean existsByNumber(Integer number) {
+        Connection conn = dataSource.getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT COUNT(*) FROM collectivity WHERE number = ?")) {
+            stmt.setInt(1, number);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+            return false;
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la vérification du numéro", e);
+        } finally {
+            dataSource.closeConnection(conn);
+        }
+    }
+
     public Optional<Collectivity> findById(String id) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
