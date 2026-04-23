@@ -25,7 +25,7 @@ public class CollectivityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(collectivities);
     }
 
-    @PatchMapping("/{id}/identity")
+    @PutMapping("/{id}/identity")
     public ResponseEntity<Collectivity> assignIdentity(
             @PathVariable String id,
             @RequestBody CollectivityIdentity identity) {

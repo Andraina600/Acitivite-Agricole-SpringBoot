@@ -42,15 +42,24 @@ public class MemberPaymentService {
         this.memberPaymentValidator = memberPaymentValidator;
     }
 
-    public List<MemberPayment> createPayments(String memberId, List<MemberPayment> payments) {
+    public List<MemberPayment> createPayments(String memberId,
+                                              List<CreateMemberPayment> requests) {
 
-        Member member = memberRepository.findById(memberId)
+        memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found: " + memberId));
 
-        for (MemberPayment payment : payments) {
-            memberPaymentValidator.validatePayment(payment);
+        List<MemberPayment> payments = new ArrayList<>();
+        for (CreateMemberPayment request : requests) {
+            memberPaymentValidator.validatePayment(request);
+
+            MemberPayment payment = new MemberPayment();
             payment.setMemberId(memberId);
+            payment.setMembershipFeeId(request.getMembershipFeeIdentifier());
+            payment.setAccountCreditedId(request.getAccountCreditedIdentifier());
+            payment.setAmount(request.getAmount());
+            payment.setPaymentMode(request.getPaymentMode());
             payment.setCreationDate(LocalDate.now());
+            payments.add(payment);
         }
 
         Connection conn = dataSource.getConnection();
@@ -59,7 +68,9 @@ public class MemberPaymentService {
 
             List<MemberPayment> saved = new ArrayList<>();
             for (MemberPayment payment : payments) {
-                MembershipFee fee = membershipFeeRepository.findById(payment.getMembershipFeeId())
+
+                MembershipFee fee = membershipFeeRepository
+                        .findById(payment.getMembershipFeeId())
                         .orElseThrow(() -> new NotFoundException(
                                 "Membership fee not found: " + payment.getMembershipFeeId()));
 

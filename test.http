@@ -2,7 +2,7 @@
 @baseUrl = http://localhost:8080
 
 ### Remplace cet UUID par celui retourné après POST /collectivities
-@collectivityId = 1113767b-9f61-4d63-9562-a7e635642c56
+@collectivityId = 04e32a51-99dd-4bff-babd-6fa6792fcb63
 
 ### ================================================================
 ### POST /collectivities — TEST 1 : Création réussie (201)
@@ -103,12 +103,12 @@ Content-Type: application/json
 ### ⚠️  Remplace @collectivityId par l'UUID retourné dans TEST 1
 ###   ✅ number et name uniques, jamais assignés
 ### ================================================================
-PATCH {{baseUrl}}/collectivities/{{collectivityId}}/identity
+PUT {{baseUrl}}/collectivities/{{collectivityId}}/identity
 Content-Type: application/json
 
 {
-  "number": 1,
-  "name": "Collectivité Agricole Analamanga"
+  "number": 2,
+  "name": "Collectivité Agricole Tana"
 }
 
 ###
@@ -117,7 +117,7 @@ Content-Type: application/json
 ### Relancer après TEST 4 sur le même UUID
 ###   ❌ number et name déjà attribués → ne peut plus être changé
 ### ================================================================
-PATCH {{baseUrl}}/collectivities/{{collectivityId}}/identity
+PUT {{baseUrl}}/collectivities/{{collectivityId}}/identity
 Content-Type: application/json
 
 {
@@ -130,7 +130,7 @@ Content-Type: application/json
 ### PATCH /collectivities/{id}/identity — TEST 6 : Collectivité introuvable (404)
 ###   ❌ UUID inexistant en base
 ### ================================================================
-PATCH {{baseUrl}}/collectivities/00000000-0000-0000-0000-000000000000/identity
+PUT {{baseUrl}}/collectivities/00000000-0000-0000-0000-000000000000/identity
 Content-Type: application/json
 
 {
