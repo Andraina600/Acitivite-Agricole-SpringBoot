@@ -204,11 +204,10 @@ Content-Type: application/json
 
 [
   {
-    "label": "Ancienne Cotisation 2025",
-    "amount": 45000,
-    "frequency": "ANNUALLY",
-    "eligibleFrom": "2025-01-01",
-    "status": "INACTIVE"
+    "label": "Cotisation mensuel",
+    "amount": 4500,
+    "frequency": "MONTHLY",
+    "eligibleFrom": "2025-01-01"
   }
 ]
 

@@ -3,6 +3,7 @@ package school.hei.springagricole.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import school.hei.springagricole.entity.CreateMembershipFee;
 import school.hei.springagricole.entity.MembershipFee;
 import school.hei.springagricole.service.MembershipFeeService;
 
@@ -29,7 +30,7 @@ public class MembershipFeeController {
     @PostMapping
     public ResponseEntity<List<MembershipFee>> create(
             @PathVariable("id") String id,
-            @RequestBody List<MembershipFee> membershipFee
+            @RequestBody List<CreateMembershipFee> membershipFee
     ){
         List<MembershipFee> fees = membershipFeeService.create(id,  membershipFee);
         return ResponseEntity
