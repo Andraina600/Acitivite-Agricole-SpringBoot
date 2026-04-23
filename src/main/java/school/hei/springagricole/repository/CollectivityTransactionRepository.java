@@ -5,6 +5,7 @@ import school.hei.springagricole.config.DataSource;
 import school.hei.springagricole.entity.CollectivityTransaction;
 import school.hei.springagricole.entity.enums.PaymentMode;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -98,5 +99,28 @@ public class CollectivityTransactionRepository {
         Date d = rs.getDate("creation_date");
         if (d != null) t.setCreationDate(d.toLocalDate());
         return t;
+    }
+
+    public BigDecimal sumAmountByAccountAfterDate(String accountId, LocalDate afterDate) {
+        Connection conn = dataSource.getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT COALESCE(SUM(amount), 0) " +
+                        "FROM collectivity_transaction " +
+                        "WHERE account_credited_id = ? " +
+                        "  AND creation_date > ?")) {
+
+            stmt.setString(1, accountId);
+            stmt.setDate(2, Date.valueOf(afterDate));
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getBigDecimal(1);
+            }
+            return BigDecimal.ZERO;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error computing balance after date for account=" + accountId, e);
+        } finally {
+            dataSource.closeConnection(conn);
+        }
     }
 }
