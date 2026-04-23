@@ -2,7 +2,7 @@
 @baseUrl = http://localhost:8080
 
 ### Remplace cet UUID par celui retourné après POST /collectivities
-@collectivityId = 04e32a51-99dd-4bff-babd-6fa6792fcb63
+@collectivityId = 0e49ff72-5efd-45d9-b5b8-2dd6978e7254
 
 ### ================================================================
 ### POST /collectivities — TEST 1 : Création réussie (201)
@@ -99,6 +99,7 @@ Content-Type: application/json
 
 ###
 GET {{baseUrl}}/collectivities/{{collectivityId}}
+Accept: application/json
 
 ###
 ### ================================================================
@@ -238,4 +239,28 @@ Accept: application/json
 
 ### Test d'erreur : Date 'from' après 'to' (Doit retourner une 400 via ton service)
 GET http://localhost:8080/collectivities/{{collectivityId}}/transactions?from=2026-12-31&to=2026-01-01
+Accept: application/json
+
+
+### 1. Récupérer tous les comptes d'une collectivité (Date par défaut : aujourd'hui)
+GET http://localhost:8080/collectivities/{{collectivityId}}/financialAccounts
+Accept: application/json
+
+### 2. Récupérer les comptes à une date précise (Paramètre 'at')
+# Utile pour voir l'état des soldes à une date passée
+GET http://localhost:8080/collectivities/{{collectivityId}}/financialAccounts?at=2026-04-23
+Accept: application/json
+
+### 3. Test d'erreur : Format de date invalide
+# Doit retourner une erreur 400 (Bad Request) car le format attendu est YYYY-MM-DD
+GET http://localhost:8080/collectivities/{{collectivityId}}/financialAccounts?at=21-04-2026
+Accept: application/json
+
+### 4. Test d'erreur : Identifiant de collectivité inexistant
+# Doit retourner une erreur 404 (Not Found) via ton service
+GET http://localhost:8080/collectivities/UNKNOWN_ID/financialAccounts
+Accept: application/json
+
+### 5. Test avec une date future
+GET http://localhost:8080/collectivities/{{collectivityId}}/financialAccounts?at=2027-12-31
 Accept: application/json

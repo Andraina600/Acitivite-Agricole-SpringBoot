@@ -53,6 +53,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Collectivity'
+        400:
+          description: Provided query parameters occur some exceptions.
         404:
           description: Collectivity not found.
   '/collectivities/{id}/financialAccounts':
@@ -91,6 +93,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/FinancialAccount'
+        400:
+          description: Provided query parameters occur some exceptions.
         404:
           description: Collectivity not found.
   '/collectivities/{id}/informations':
