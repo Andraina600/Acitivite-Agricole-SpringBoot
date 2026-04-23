@@ -28,7 +28,7 @@ public class MembershipFeeService {
     public List<MembershipFee> getByCollectivityId(String collectivityId) {
         collectivityRepository.findById(collectivityId)
                 .orElseThrow(() -> new NotFoundException(
-                        "Collectivité non trouvée : " + collectivityId));
+                        "Collectivity not found: " + collectivityId));
         return membershipFeeRepository.findByCollectivityId(collectivityId);
     }
 
@@ -36,20 +36,20 @@ public class MembershipFeeService {
                                       List<CreateMembershipFee> requests) {
         collectivityRepository.findById(collectivityId)
                 .orElseThrow(() -> new NotFoundException(
-                        "Collectivité non trouvée : " + collectivityId));
+                        "Collectivity not found: " + collectivityId));
 
         List<MembershipFee> toSave = new ArrayList<>();
         for (CreateMembershipFee request : requests) {
             if (request.getAmount() == null
                     || request.getAmount().compareTo(BigDecimal.ZERO) < 0) {
                 throw new BadRequestException(
-                        "Le montant d'une cotisation ne peut pas être négatif");
+                        "Membership fee amount cannot be negative");
             }
             if (request.getFrequency() == null) {
-                throw new BadRequestException("La fréquence est obligatoire");
+                throw new BadRequestException("Frequency is mandatory");
             }
             if (request.getEligibleFrom() == null) {
-                throw new BadRequestException("La date eligible_from est obligatoire");
+                throw new BadRequestException("The date eligible_from is mandatory");
             }
 
             MembershipFee fee = new MembershipFee(
