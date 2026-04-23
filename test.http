@@ -98,7 +98,7 @@ Content-Type: application/json
 ]
 
 ###
-GET {{baseUrl}}/collectivities/{{collectivityId}}
+GET {{baseUrl}}/members/07cadb5a-c35c-4d0f-a239-36e486d26344
 Accept: application/json
 
 ###
@@ -107,7 +107,7 @@ Accept: application/json
 ### ⚠️  Remplace @collectivityId par l'UUID retourné dans TEST 1
 ###   ✅ number et name uniques, jamais assignés
 ### ================================================================
-PUT {{baseUrl}}/collectivities/{{collectivityId}}/identity
+PUT {{baseUrl}}/collectivities/{{collectivityId}}/informations
 Content-Type: application/json
 
 {
@@ -121,7 +121,7 @@ Content-Type: application/json
 ### Relancer après TEST 4 sur le même UUID
 ###   ❌ number et name déjà attribués → ne peut plus être changé
 ### ================================================================
-PUT {{baseUrl}}/collectivities/{{collectivityId}}/identity
+PUT {{baseUrl}}/collectivities/{{collectivityId}}/informations
 Content-Type: application/json
 
 {
@@ -134,7 +134,7 @@ Content-Type: application/json
 ### PATCH /collectivities/{id}/identity — TEST 6 : Collectivité introuvable (404)
 ###   ❌ UUID inexistant en base
 ### ================================================================
-PUT {{baseUrl}}/collectivities/00000000-0000-0000-0000-000000000000/identity
+PUT {{baseUrl}}/collectivities/00000000-0000-0000-0000-000000000000/informations
 Content-Type: application/json
 
 {
@@ -217,7 +217,7 @@ Content-Type: application/json
 
 ### 4. Test d'une collectivité inexistante ou vide
 # Pour vérifier que ton service renvoie bien une liste vide [] ou une 404
-GET {{baseUrl}}/collectivities/{{collectivityId}}/membershipFees
+GET {{baseUrl}}/collectivities/000000045/membershipFees
 Accept: application/json
 
 ### Créer des paiements pour un membre
