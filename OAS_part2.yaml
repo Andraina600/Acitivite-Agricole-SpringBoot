@@ -55,6 +55,44 @@ paths:
                 $ref: '#/components/schemas/Collectivity'
         404:
           description: Collectivity not found.
+  '/collectivities/{id}/financialAccounts':
+    get:
+      summary: Retrieve financial accounts of a collectivity
+      description: |
+        Returns all financial accounts (cash, bank, mobile money) belonging to the given
+        collectivity, each with its balance.
+
+        If the optional query parameter `at` is provided, each account's balance is
+        recomputed as of that date: balance = current balance − sum of transactions
+        recorded after that date. If `at` is omitted or equals today, the current
+        balance is returned as-is.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Internal UUID of the collectivity
+        - in: query
+          name: at
+          required: false
+          schema:
+            type: string
+            format: date
+          description: |
+            Reference date for historical balance computation (ISO 8601, e.g. 2026-01-15).
+            When absent, returns the current balance.
+      responses:
+        200:
+          description: List of financial accounts with their balance at the requested date
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinancialAccount'
+        404:
+          description: Collectivity not found.
   '/collectivities/{id}/informations':
     put:
       summary: Attribute collectivity informations to specific collectivity
