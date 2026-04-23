@@ -30,6 +30,16 @@ public class CollectivityController {
             @PathVariable String id,
             @RequestBody CollectivityIdentity identity) {
         Collectivity updated = collectivityService.assignIdentity(id, identity);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(updated);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Collectivity> getCollectivity(@PathVariable String id) {
+        Collectivity collectivity = collectivityService.getById(id);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(collectivity);
     }
 }

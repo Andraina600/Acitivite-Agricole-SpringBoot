@@ -91,6 +91,11 @@ public class CollectivityService {
         return result;
     }
 
+    public Collectivity getById(String id) {
+        return collectivityRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Collectivity not found: " + id));
+    }
+
     public Collectivity assignIdentity(String collectivityId, CollectivityIdentity identity) {
         Collectivity collectivity = collectivityRepository.findById(collectivityId)
                 .orElseThrow(() -> new NotFoundException(
