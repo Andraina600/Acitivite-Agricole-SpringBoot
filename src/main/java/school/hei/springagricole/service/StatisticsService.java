@@ -1,6 +1,11 @@
 package school.hei.springagricole.service;
 
+
 import org.springframework.stereotype.Service;
+import school.hei.springagricole.dto.CollectivityNewMembers;
+import school.hei.springagricole.dto.MemberAssiduity;
+import school.hei.springagricole.dto.MemberEarnedAmount;
+import school.hei.springagricole.dto.MemberUnpaidAmount;
 import school.hei.springagricole.entity.*;
 import school.hei.springagricole.exception.BadRequestException;
 import school.hei.springagricole.exception.NotFoundException;
@@ -10,9 +15,7 @@ import school.hei.springagricole.repository.StatisticsRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class StatisticsService {
@@ -33,18 +36,35 @@ public class StatisticsService {
             String collectivityId, LocalDate from, LocalDate to) {
 
         validatePeriod(from, to);
-
         collectivityRepository.findById(collectivityId)
                 .orElseThrow(() -> new NotFoundException(
                         "Collectivity not found: " + collectivityId));
 
-        Map<String, BigDecimal> earnedByMember =
+        // Récupération des listes typées
+        List<MemberEarnedAmount> earnedList =
                 statisticsRepository.findEarnedAmountByMember(collectivityId, from, to);
-
-        Map<String, BigDecimal> unpaidByMember =
+        List<MemberUnpaidAmount> unpaidList =
                 statisticsRepository.findUnpaidAmountByMember(collectivityId, from, to);
+        List<MemberAssiduity> assiduityList =
+                statisticsRepository.findAssiduityByMember(collectivityId, from, to);
+        List<String> memberIds =
+                statisticsRepository.findMemberIdsByCollectivity(collectivityId);
 
-        List<String> memberIds = statisticsRepository.findMemberIdsByCollectivity(collectivityId);
+        // Index par memberId pour lookup O(1)
+        Map<String, BigDecimal> earnedIndex = new HashMap<>();
+        for (MemberEarnedAmount e : earnedList) {
+            earnedIndex.put(e.getMemberId(), e.getEarnedAmount());
+        }
+
+        Map<String, BigDecimal> unpaidIndex = new HashMap<>();
+        for (MemberUnpaidAmount u : unpaidList) {
+            unpaidIndex.put(u.getMemberId(), u.getUnpaidAmount());
+        }
+
+        Map<String, Double> assiduityIndex = new HashMap<>();
+        for (MemberAssiduity a : assiduityList) {
+            assiduityIndex.put(a.getMemberId(), a.getAssiduityPercentage());
+        }
 
         List<CollectivityLocalStatistics> result = new ArrayList<>();
         for (String memberId : memberIds) {
@@ -56,15 +76,16 @@ public class StatisticsService {
                     member.getFirstName(),
                     member.getLastName(),
                     member.getEmail(),
-                    member.getOccupation() != null ? member.getOccupation().name() : null
+                    member.getOccupation() != null
+                            ? member.getOccupation().name() : null
             );
 
-            BigDecimal earned = earnedByMember.getOrDefault(memberId, BigDecimal.ZERO);
-            BigDecimal unpaid = unpaidByMember.getOrDefault(memberId, BigDecimal.ZERO);
-
-            result.add(new CollectivityLocalStatistics(desc, earned, unpaid));
+            result.add(new CollectivityLocalStatistics(
+                    desc,
+                    earnedIndex.getOrDefault(memberId, BigDecimal.ZERO),
+                    unpaidIndex.getOrDefault(memberId, BigDecimal.ZERO)
+            ));
         }
-
         return result;
     }
 
@@ -74,14 +95,19 @@ public class StatisticsService {
         validatePeriod(from, to);
 
         List<String> collectivityIds = statisticsRepository.findAllCollectivityIds();
-        Map<String, Integer> newMembersMap =
+
+        // Index par collectivityId pour lookup O(1)
+        List<CollectivityNewMembers> newMembersList =
                 statisticsRepository.findNewMembersCountByCollectivity(from, to);
+        Map<String, Integer> newMembersIndex = new HashMap<>();
+        for (CollectivityNewMembers c : newMembersList) {
+            newMembersIndex.put(c.getCollectivityId(), c.getNewMembersCount());
+        }
 
         List<CollectivityOverallStatistics> result = new ArrayList<>();
-
         for (String collectivityId : collectivityIds) {
-            Collectivity collectivity = collectivityRepository.findById(collectivityId)
-                    .orElse(null);
+            Collectivity collectivity =
+                    collectivityRepository.findById(collectivityId).orElse(null);
             if (collectivity == null) continue;
 
             CollectivityInformation info = new CollectivityInformation(
@@ -89,14 +115,15 @@ public class StatisticsService {
                     collectivity.getNumber()
             );
 
-            int newMembers = newMembersMap.getOrDefault(collectivityId, 0);
+            int newMembers = newMembersIndex.getOrDefault(collectivityId, 0);
 
-            double duePercentage = statisticsRepository
-                    .computeCurrentDuePercentage(collectivityId, from, to);
+            double duePercentage =
+                    statisticsRepository.computeCurrentDuePercentage(
+                            collectivityId, from, to);
 
-            result.add(new CollectivityOverallStatistics(info, newMembers, duePercentage));
+            result.add(new CollectivityOverallStatistics(
+                    info, newMembers, duePercentage));
         }
-
         return result;
     }
 
