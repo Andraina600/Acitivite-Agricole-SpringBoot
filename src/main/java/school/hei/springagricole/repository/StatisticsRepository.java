@@ -22,14 +22,6 @@ public class StatisticsRepository {
         this.dataSource = dataSource;
     }
 
-    // =========================================================================
-    // STATS LOCALES
-    // =========================================================================
-
-    /**
-     * Retourne le montant encaissé par membre pour les cotisations
-     * d'une collectivité sur une période donnée.
-     */
     public List<MemberEarnedAmount> findEarnedAmountByMember(
             String collectivityId, LocalDate from, LocalDate to) {
 
@@ -65,11 +57,6 @@ public class StatisticsRepository {
         return result;
     }
 
-    /**
-     * Retourne le montant impayé potentiel par membre,
-     * uniquement sur les cotisations ACTIVES de la collectivité.
-     * GREATEST(..., 0) évite les valeurs négatives (surpaiement).
-     */
     public List<MemberUnpaidAmount> findUnpaidAmountByMember(
             String collectivityId, LocalDate from, LocalDate to) {
 
@@ -123,11 +110,6 @@ public class StatisticsRepository {
         return result;
     }
 
-    /**
-     * Retourne le taux d'assiduité par membre pour les activités
-     * d'une collectivité sur une période donnée.
-     * UNDEFINED est ignoré — seuls ATTENDED et MISSING comptent.
-     */
     public List<MemberAssiduity> findAssiduityByMember(
             String collectivityId, LocalDate from, LocalDate to) {
 
@@ -177,14 +159,6 @@ public class StatisticsRepository {
         return result;
     }
 
-    // =========================================================================
-    // STATS GLOBALES
-    // =========================================================================
-
-    /**
-     * Retourne le nombre de nouveaux adhérents par collectivité
-     * dont la date d'adhésion est dans la période donnée.
-     */
     public List<CollectivityNewMembers> findNewMembersCountByCollectivity(
             LocalDate from, LocalDate to) {
 
@@ -216,11 +190,6 @@ public class StatisticsRepository {
         return result;
     }
 
-    /**
-     * Calcule le pourcentage de membres à jour dans leurs cotisations ACTIVES.
-     * Un membre est "à jour" s'il a payé au moins le montant de
-     * TOUTES les cotisations actives de la collectivité sur la période.
-     */
     public double computeCurrentDuePercentage(
             String collectivityId, LocalDate from, LocalDate to) {
 
@@ -310,9 +279,6 @@ public class StatisticsRepository {
         }
     }
 
-    /**
-     * Retourne tous les IDs de collectivités existantes.
-     */
     public List<String> findAllCollectivityIds() {
         String sql = "SELECT id FROM collectivity";
         List<String> ids = new ArrayList<>();
@@ -328,9 +294,6 @@ public class StatisticsRepository {
         return ids;
     }
 
-    /**
-     * Retourne les IDs des membres d'une collectivité.
-     */
     public List<String> findMemberIdsByCollectivity(String collectivityId) {
         String sql = "SELECT id FROM member WHERE collectivity_id = ?";
         List<String> ids = new ArrayList<>();
