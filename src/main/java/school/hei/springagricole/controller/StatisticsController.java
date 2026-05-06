@@ -24,7 +24,7 @@ public class StatisticsController {
     }
 
 
-    @GetMapping("/collectivites/{id}/statistics")
+    @GetMapping("/collectivities/{id}/statistics")
     public ResponseEntity<List<CollectivityLocalStatistics>> getLocalStatistics(
             @PathVariable("id") String id,
             @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -35,7 +35,7 @@ public class StatisticsController {
         return ResponseEntity.ok(stats);
     }
 
-    @GetMapping("/collectivites/statistics")
+    @GetMapping("/collectivities/statistics")
     public ResponseEntity<List<CollectivityOverallStatistics>> getOverallStatistics(
             @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
