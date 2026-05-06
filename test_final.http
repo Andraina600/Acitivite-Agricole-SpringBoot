@@ -1,0 +1,370 @@
+### ============================================================
+### STATISTIQUES LOCALES - Collectivité 1
+### Attendu : earnedAmount et unpaidAmount par membre
+### C1-M1 à C1-M6 ont payé 100 000 (cotisation = 100 000) → unpaid = 0
+### C1-M7 a payé 60 000 (cotisation = 100 000) → unpaid = 40 000
+### C1-M8 a payé 90 000 (cotisation = 100 000) → unpaid = 10 000
+### ============================================================
+
+GET http://localhost:8080/collectivities/col-1/statistics?from=2026-01-01&to=2026-12-31
+
+###
+
+### ============================================================
+### STATISTIQUES LOCALES - Collectivité 2
+### C1-M1 a payé 60 000 (cotisation = 100 000) → unpaid = 40 000
+### C1-M2 a payé 90 000 (cotisation = 100 000) → unpaid = 10 000
+### C1-M3 à C1-M6 ont payé 100 000 → unpaid = 0
+### C1-M7 a payé 40 000 → unpaid = 60 000
+### C1-M8 a payé 60 000 → unpaid = 40 000
+### ============================================================
+
+GET http://localhost:8080/collectivities/col-2/statistics?from=2026-01-01&to=2026-12-31
+
+###
+
+### ============================================================
+### STATISTIQUES LOCALES - Collectivité 3
+### Aucun paiement effectué → earnedAmount = 0, unpaidAmount = 50 000 par membre
+### ============================================================
+
+GET http://localhost:8080/collectivities/col-3/statistics?from=2026-01-01&to=2026-12-31
+
+###
+
+### ============================================================
+### STATISTIQUES LOCALES - Période restreinte (janvier uniquement)
+### ============================================================
+
+GET http://localhost:8080/collectivities/col-1/statistics?from=2026-01-01&to=2026-01-31
+
+###
+
+### ============================================================
+### STATISTIQUES GLOBALES - Toutes les collectivités
+### Attendu pour col-1 : 6/8 membres à jour → 75%, nouveaux membres selon admission_date
+### Attendu pour col-2 : 4/8 membres à jour → 50%
+### Attendu pour col-3 : 0/8 membres à jour → 0%
+### ============================================================
+
+GET http://localhost:8080/collectivities/statistics?from=2026-01-01&to=2026-12-31
+
+###
+
+### ============================================================
+### STATISTIQUES GLOBALES - Période restreinte
+### ============================================================
+
+GET http://localhost:8080/collectivities/statistics?from=2026-01-01&to=2026-06-30
+
+###
+
+### ============================================================
+### TEST - Cotisation INACTIVE ignorée dans le calcul
+### 1. Désactiver cot-1 directement en base :
+###    UPDATE membership_fee SET status = 'INACTIVE' WHERE id = 'cot-1';
+### 2. Relancer ce test → unpaidAmount doit être 0 pour tous les membres
+###    car la seule cotisation est inactive
+### ============================================================
+
+GET http://localhost:8080/collectivities/col-1/statistics?from=2026-01-01&to=2026-12-31
+
+###
+
+### ============================================================
+### TEST - Collectivité inexistante → attendu 404
+### ============================================================
+
+GET http://localhost:8080/collectivities/col-999/statistics?from=2026-01-01&to=2026-12-31
+
+###
+
+### ============================================================
+### TEST - Dates invalides (from > to) → attendu 400
+### ============================================================
+
+GET http://localhost:8080/collectivities/col-1/statistics?from=2026-12-31&to=2026-01-01
+
+###
+
+GET http://localhost:8080/collectivities/statistics?from=2026-12-31&to=2026-01-01
+
+###
+
+### ============================================================
+### 1. CREATION D'ACTIVITES - Collectivité 1
+### ============================================================
+
+### Activité récurrente : assemblée générale tous les 2ème dimanche du mois
+POST http://localhost:8080/collectivities/col-1/activities
+Content-Type: application/json
+
+[
+  {
+    "label": "Assemblée générale mensuelle",
+    "activityType": "MEETING",
+    "memberOccupationConcerned": [],
+    "recurrenceRule": {
+      "weekOrdinal": 2,
+      "dayOfWeek": "SU"
+    }
+  }
+]
+
+###
+
+### Activité récurrente : formation obligatoire juniors tous les 4ème samedi du mois
+POST http://localhost:8080/collectivities/col-1/activities
+Content-Type: application/json
+
+[
+  {
+    "label": "Formation obligatoire juniors",
+    "activityType": "TRAINING",
+    "memberOccupationConcerned": ["JUNIOR"],
+    "recurrenceRule": {
+      "weekOrdinal": 4,
+      "dayOfWeek": "SA"
+    }
+  }
+]
+
+###
+
+### Activité exceptionnelle à date fixe : formation thématique
+POST http://localhost:8080/collectivities/col-1/activities
+Content-Type: application/json
+
+[
+  {
+    "label": "Formation technique riziculture",
+    "activityType": "TRAINING",
+    "memberOccupationConcerned": [],
+    "executiveDate": "2026-06-15"
+  }
+]
+
+###
+
+### Activité pour membres SENIOR uniquement
+POST http://localhost:8080/collectivities/col-1/activities
+Content-Type: application/json
+
+[
+  {
+    "label": "Réunion des membres confirmés",
+    "activityType": "OTHER",
+    "memberOccupationConcerned": ["SENIOR", "PRESIDENT", "VICE_PRESIDENT", "TREASURER", "SECRETARY"],
+    "executiveDate": "2026-07-10"
+  }
+]
+
+###
+
+### Plusieurs activités en une seule requête pour col-2
+POST http://localhost:8080/collectivities/col-2/activities
+Content-Type: application/json
+
+[
+  {
+    "label": "Assemblée générale mensuelle",
+    "activityType": "MEETING",
+    "memberOccupationConcerned": [],
+    "recurrenceRule": {
+      "weekOrdinal": 1,
+      "dayOfWeek": "SA"
+    }
+  },
+  {
+    "label": "Formation pisciculture",
+    "activityType": "TRAINING",
+    "memberOccupationConcerned": [],
+    "executiveDate": "2026-05-20"
+  }
+]
+
+### ============================================================
+### 2. CAS D'ERREUR - Création d'activités
+### ============================================================
+
+### Erreur 400 : recurrenceRule ET executiveDate fournis en même temps
+POST http://localhost:8080/collectivities/col-1/activities
+Content-Type: application/json
+
+[
+  {
+    "label": "Activité invalide",
+    "activityType": "MEETING",
+    "memberOccupationConcerned": [],
+    "recurrenceRule": {
+      "weekOrdinal": 2,
+      "dayOfWeek": "SU"
+    },
+    "executiveDate": "2026-06-15"
+  }
+]
+
+###
+
+### Erreur 400 : ni recurrenceRule ni executiveDate fournis
+POST http://localhost:8080/collectivities/col-1/activities
+Content-Type: application/json
+
+[
+  {
+    "label": "Activité sans date",
+    "activityType": "MEETING",
+    "memberOccupationConcerned": []
+  }
+]
+
+###
+
+### Erreur 400 : weekOrdinal invalide (> 5)
+POST http://localhost:8080/collectivities/col-1/activities
+Content-Type: application/json
+
+[
+  {
+    "label": "Activité invalide",
+    "activityType": "MEETING",
+    "memberOccupationConcerned": [],
+    "recurrenceRule": {
+      "weekOrdinal": 6,
+      "dayOfWeek": "MO"
+    }
+  }
+]
+
+###
+
+### Erreur 404 : collectivité inexistante
+POST http://localhost:8080/collectivities/col-999/activities
+Content-Type: application/json
+
+[
+  {
+    "label": "Test",
+    "activityType": "MEETING",
+    "memberOccupationConcerned": [],
+    "executiveDate": "2026-06-15"
+  }
+]
+
+### ============================================================
+### 3. GET ACTIVITES
+### ============================================================
+
+### Liste des activités de col-1
+GET http://localhost:8080/collectivities/col-1/activities
+
+###
+
+### Liste des activités de col-2
+GET http://localhost:8080/collectivities/col-2/activities
+
+###
+
+### Erreur 404 : collectivité inexistante
+GET http://localhost:8080/collectivities/col-999/activities
+
+### ============================================================
+### 4. ENREGISTREMENT DES PRESENCES
+### Remplace {activityId} par l'id retourné lors de la création
+### ============================================================
+
+### POST attendance - marquer des membres présents et absents
+### (remplace act-id-1 par le vrai id de l'activité "Assemblée générale mensuelle")
+POST http://localhost:8080/collectivities/col-1/activities/2b1021fd-95fd-4971-98a2-e205e3511227/attendance
+Content-Type: application/json
+
+[
+  {
+    "memberIdentifier": "C1-M1",
+    "attendanceStatus": "ATTENDED"
+  },
+  {
+    "memberIdentifier": "C1-M2",
+    "attendanceStatus": "ATTENDED"
+  },
+  {
+    "memberIdentifier": "C1-M3",
+    "attendanceStatus": "ATTENDED"
+  },
+  {
+    "memberIdentifier": "C1-M4",
+    "attendanceStatus": "MISSING"
+  }
+]
+
+###
+
+### Membre externe (de col-2) qui assiste à une activité de col-1
+POST http://localhost:8080/collectivities/col-1/activities/2b1021fd-95fd-4971-98a2-e205e3511227/attendance
+Content-Type: application/json
+
+[
+  {
+    "memberIdentifier": "C1-M8",
+    "attendanceStatus": "MISSING"
+  }
+]
+
+### ============================================================
+### 5. CAS D'ERREUR - Attendance
+### ============================================================
+
+### Erreur 400 : tentative de modifier un statut déjà confirmé (ATTENDED ou MISSING)
+### C1-M1 a déjà été marqué ATTENDED → doit retourner 400
+POST http://localhost:8080/collectivities/col-1/activities/2b1021fd-95fd-4971-98a2-e205e3511227/attendance
+Content-Type: application/json
+
+[
+  {
+    "memberIdentifier": "C1-M1",
+    "attendanceStatus": "MISSING"
+  }
+]
+
+###
+
+### Erreur 404 : membre inexistant
+POST http://localhost:8080/collectivities/col-1/activities/e99884f2-acee-4e05-9590-18a91ffec4f9/attendance
+Content-Type: application/json
+
+[
+  {
+    "memberIdentifier": "MEMBRE-INEXISTANT",
+    "attendanceStatus": "ATTENDED"
+  }
+]
+
+###
+
+### Erreur 404 : activité inexistante
+POST http://localhost:8080/collectivities/col-1/activities/activite-inexistante/attendance
+Content-Type: application/json
+
+[
+  {
+    "memberIdentifier": "C1-M1",
+    "attendanceStatus": "ATTENDED"
+  }
+]
+
+### ============================================================
+### 6. GET ATTENDANCE - Récupérer les présences
+### ============================================================
+
+### Liste complète des présences (ATTENDED + MISSING + UNDEFINED)
+GET http://localhost:8080/collectivities/col-1/activities/2b1021fd-95fd-4971-98a2-e205e3511227/attendance
+
+###
+
+### Erreur 404 : activité inexistante
+GET http://localhost:8080/collectivities/col-1/activities/activite-inexistante/attendance
+
+###
+
+### Erreur 404 : collectivité inexistante
+GET http://localhost:8080/collectivities/col-999/activities/act-id-1/attendance

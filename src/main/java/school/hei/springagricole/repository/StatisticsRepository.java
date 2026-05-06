@@ -7,7 +7,6 @@ import school.hei.springagricole.dto.MemberAssiduity;
 import school.hei.springagricole.dto.MemberEarnedAmount;
 import school.hei.springagricole.dto.MemberUnpaidAmount;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -61,40 +60,50 @@ public class StatisticsRepository {
             String collectivityId, LocalDate from, LocalDate to) {
 
         String sql = """
-                SELECT m.id AS member_id,
-                       COALESCE(SUM(
-                           GREATEST(
-                               mf.amount - COALESCE(
-                                   (SELECT SUM(mp.amount)
-                                    FROM member_payment mp
-                                    WHERE mp.member_id = m.id
-                                      AND mp.membership_fee_id = mf.id
-                                      AND mp.creation_date >= ?
-                                      AND mp.creation_date <= ?),
+                    SELECT m.id AS member_id,
+                           COALESCE(SUM(
+                               GREATEST(
+                                   (CASE mf.frequency
+                                        WHEN 'ANNUALLY' THEN mf.amount
+                                        WHEN 'MONTHLY'  THEN mf.amount *
+                                            (EXTRACT(YEAR FROM AGE(LEAST(?, CURRENT_DATE), mf.eligible_from)) * 12
+                                            + EXTRACT(MONTH FROM AGE(LEAST(?, CURRENT_DATE), mf.eligible_from)) + 1)
+                                        ELSE mf.amount
+                                    END)
+                                   - COALESCE(
+                                       (SELECT SUM(mp.amount)
+                                        FROM member_payment mp
+                                        WHERE mp.member_id = m.id
+                                          AND mp.membership_fee_id = mf.id
+                                          AND mp.creation_date >= ?
+                                          AND mp.creation_date <= ?),
+                                       0
+                                   ),
                                    0
-                               ),
-                               0
-                           )
-                       ), 0) AS unpaid
-                FROM member m
-                CROSS JOIN membership_fee mf
-                WHERE m.collectivity_id = ?
-                  AND mf.collectivity_id = ?
-                  AND mf.status = 'ACTIVE'
-                  AND mf.eligible_from >= ?
-                  AND mf.eligible_from <= ?
-                GROUP BY m.id
-                """;
+                               )
+                           ), 0) AS unpaid
+                    FROM member m
+                    CROSS JOIN membership_fee mf
+                    WHERE m.collectivity_id = ?
+                    AND mf.collectivity_id = ?
+                    AND mf.status = 'ACTIVE'
+                    AND mf.frequency != 'PUNCTUALLY'    -- ← ajouter cette ligne
+                    AND mf.eligible_from >= ?
+                    AND mf.eligible_from <= ?
+                    GROUP BY m.id
+        """;
 
         List<MemberUnpaidAmount> result = new ArrayList<>();
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setDate(1, Date.valueOf(from));
+            stmt.setDate(1, Date.valueOf(to));
             stmt.setDate(2, Date.valueOf(to));
-            stmt.setString(3, collectivityId);
-            stmt.setString(4, collectivityId);
-            stmt.setDate(5, Date.valueOf(from));
-            stmt.setDate(6, Date.valueOf(to));
+            stmt.setDate(3, Date.valueOf(from));
+            stmt.setDate(4, Date.valueOf(to));
+            stmt.setString(5, collectivityId);
+            stmt.setString(6, collectivityId);
+            stmt.setDate(7, Date.valueOf(from));
+            stmt.setDate(8, Date.valueOf(to));
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 result.add(new MemberUnpaidAmount(
@@ -116,11 +125,11 @@ public class StatisticsRepository {
         String sql = """
                 SELECT aa.member_id,
                        CASE
-                           WHEN COUNT(*) FILTER (WHERE aa.status IN ('ATTENDED','MISSING')) = 0
+                           WHEN COUNT(aa.id) FILTER (WHERE aa.status IN ('ATTENDED','MISSING')) = 0
                            THEN 100.0
                            ELSE
-                               COUNT(*) FILTER (WHERE aa.status = 'ATTENDED') * 100.0
-                               / COUNT(*) FILTER (WHERE aa.status IN ('ATTENDED','MISSING'))
+                               COUNT(aa.id) FILTER (WHERE aa.status = 'ATTENDED') * 100.0
+                               / COUNT(aa.id) FILTER (WHERE aa.status IN ('ATTENDED','MISSING'))
                        END AS assiduity_pct
                 FROM activity_attendance aa
                 JOIN collectivity_activity ca ON ca.id = aa.activity_id
@@ -194,7 +203,7 @@ public class StatisticsRepository {
             String collectivityId, LocalDate from, LocalDate to) {
 
         String countFeesSql = """
-                SELECT COUNT(*) FROM membership_fee
+                SELECT COUNT(id) FROM membership_fee
                 WHERE collectivity_id = ?
                   AND status = 'ACTIVE'
                   AND eligible_from >= ?
@@ -227,45 +236,54 @@ public class StatisticsRepository {
         }
 
         String sql = """
-                SELECT AVG(is_up_to_date) * 100.0 AS due_percentage
-                FROM (
-                    SELECT member_id,
-                           CASE WHEN MIN(is_paid) = 1 THEN 1 ELSE 0 END AS is_up_to_date
+                    SELECT AVG(is_up_to_date) * 100.0 AS due_percentage
                     FROM (
-                        SELECT m.id AS member_id,
-                               mf.id AS fee_id,
-                               CASE
-                                   WHEN COALESCE(
-                                       (SELECT SUM(mp.amount)
-                                        FROM member_payment mp
-                                        WHERE mp.member_id = m.id
-                                          AND mp.membership_fee_id = mf.id
-                                          AND mp.creation_date >= ?
-                                          AND mp.creation_date <= ?),
-                                       0
-                                   ) >= mf.amount
-                                   THEN 1 ELSE 0
-                               END AS is_paid
-                        FROM member m
-                        CROSS JOIN membership_fee mf
-                        WHERE m.collectivity_id = ?
-                          AND mf.collectivity_id = ?
-                          AND mf.status = 'ACTIVE'
-                          AND mf.eligible_from >= ?
-                          AND mf.eligible_from <= ?
-                    ) AS member_fee_status
-                    GROUP BY member_id
-                ) AS member_status
-                """;
+                        SELECT member_id,
+                               CASE WHEN MIN(is_paid) = 1 THEN 1 ELSE 0 END AS is_up_to_date
+                        FROM (
+                            SELECT m.id AS member_id,
+                                   mf.id AS fee_id,
+                                   CASE
+                                       WHEN COALESCE(
+                                           (SELECT SUM(mp.amount)
+                                            FROM member_payment mp
+                                            WHERE mp.member_id = m.id
+                                              AND mp.membership_fee_id = mf.id
+                                              AND mp.creation_date >= ?
+                                              AND mp.creation_date <= ?),
+                                           0
+                                       ) >= (CASE mf.frequency
+                                                 WHEN 'ANNUALLY' THEN mf.amount
+                                                 WHEN 'MONTHLY'  THEN mf.amount *
+                                                     (EXTRACT(YEAR FROM AGE(LEAST(?, CURRENT_DATE), mf.eligible_from)) * 12
+                                                     + EXTRACT(MONTH FROM AGE(LEAST(?, CURRENT_DATE), mf.eligible_from)) + 1)
+                                                 ELSE mf.amount
+                                             END)
+                                       THEN 1 ELSE 0
+                                   END AS is_paid
+                            FROM member m
+                            CROSS JOIN membership_fee mf
+                            WHERE m.collectivity_id = ?
+                              AND mf.collectivity_id = ?
+                              AND mf.status = 'ACTIVE'
+                              AND mf.frequency != 'PUNCTUALLY'
+                              AND mf.eligible_from >= ?
+                              AND mf.eligible_from <= ?
+                        ) AS member_fee_status
+                        GROUP BY member_id
+                    ) AS member_status
+        """;
 
         conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setDate(1, Date.valueOf(from));
             stmt.setDate(2, Date.valueOf(to));
-            stmt.setString(3, collectivityId);
-            stmt.setString(4, collectivityId);
-            stmt.setDate(5, Date.valueOf(from));
-            stmt.setDate(6, Date.valueOf(to));
+            stmt.setDate(3, Date.valueOf(to));
+            stmt.setDate(4, Date.valueOf(to));
+            stmt.setString(5, collectivityId);
+            stmt.setString(6, collectivityId);
+            stmt.setDate(7, Date.valueOf(from));
+            stmt.setDate(8, Date.valueOf(to));
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 double val = rs.getDouble("due_percentage");
