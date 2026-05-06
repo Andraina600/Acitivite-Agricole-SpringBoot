@@ -81,7 +81,8 @@ public class StatisticsService {
             result.add(new CollectivityLocalStatistics(
                     desc,
                     earnedIndex.getOrDefault(memberId, BigDecimal.ZERO),
-                    unpaidIndex.getOrDefault(memberId, BigDecimal.ZERO)
+                    unpaidIndex.getOrDefault(memberId, BigDecimal.ZERO),
+                    assiduityIndex.getOrDefault(memberId, 100.0)
             ));
         }
         return result;
@@ -118,8 +119,12 @@ public class StatisticsService {
                     statisticsRepository.computeCurrentDuePercentage(
                             collectivityId, from, to);
 
+            double assiduityPercentage =
+                    statisticsRepository.computeCollectivityAssiduityPercentage(
+                            collectivityId, from, to);
+
             result.add(new CollectivityOverallStatistics(
-                    info, newMembers, duePercentage));
+                    info, newMembers, duePercentage, assiduityPercentage));
         }
         return result;
     }

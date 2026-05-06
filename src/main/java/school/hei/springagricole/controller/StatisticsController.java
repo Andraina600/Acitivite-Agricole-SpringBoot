@@ -2,6 +2,7 @@ package school.hei.springagricole.controller;
 
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,9 +31,10 @@ public class StatisticsController {
             @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
-        List<CollectivityLocalStatistics> stats =
-                statisticsService.getLocalStatistics(id, from, to);
-        return ResponseEntity.ok(stats);
+        List<CollectivityLocalStatistics> stats = statisticsService.getLocalStatistics(id, from, to);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(stats);
     }
 
     @GetMapping("/collectivities/statistics")
@@ -40,8 +42,9 @@ public class StatisticsController {
             @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
-        List<CollectivityOverallStatistics> stats =
-                statisticsService.getOverallStatistics(from, to);
-        return ResponseEntity.ok(stats);
+        List<CollectivityOverallStatistics> stats = statisticsService.getOverallStatistics(from, to);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(stats);
     }
 }

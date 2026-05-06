@@ -279,6 +279,55 @@ public class StatisticsRepository {
         }
     }
 
+    public double computeCollectivityAssiduityPercentage(
+            String collectivityId, LocalDate from, LocalDate to) {
+
+        String sql = """
+                SELECT AVG(member_assiduity) AS overall_assiduity
+                FROM (
+                    SELECT aa.member_id,
+                           CASE
+                               WHEN COUNT(*) FILTER (WHERE aa.status IN ('ATTENDED','MISSING')) = 0
+                               THEN 100.0
+                               ELSE
+                                   COUNT(*) FILTER (WHERE aa.status = 'ATTENDED') * 100.0
+                                   / COUNT(*) FILTER (WHERE aa.status IN ('ATTENDED','MISSING'))
+                           END AS member_assiduity
+                    FROM activity_attendance aa
+                    JOIN collectivity_activity ca ON ca.id = aa.activity_id
+                    WHERE ca.collectivity_id = ?
+                      AND aa.member_id IN (
+                          SELECT id FROM member WHERE collectivity_id = ?
+                      )
+                      AND (
+                            (ca.executive_date IS NOT NULL
+                             AND ca.executive_date >= ?
+                             AND ca.executive_date <= ?)
+                            OR ca.executive_date IS NULL
+                          )
+                    GROUP BY aa.member_id
+                ) AS per_member_assiduity
+                """;
+
+        Connection conn = dataSource.getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, collectivityId);
+            stmt.setString(2, collectivityId);
+            stmt.setDate(3, Date.valueOf(from));
+            stmt.setDate(4, Date.valueOf(to));
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                double val = rs.getDouble("overall_assiduity");
+                return rs.wasNull() ? 100.0 : val;
+            }
+            return 100.0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error computing collectivity assiduity", e);
+        } finally {
+            dataSource.closeConnection(conn);
+        }
+    }
+
     public List<String> findAllCollectivityIds() {
         String sql = "SELECT id FROM collectivity";
         List<String> ids = new ArrayList<>();
