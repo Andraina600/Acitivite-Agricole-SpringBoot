@@ -116,11 +116,11 @@ public class StatisticsRepository {
         String sql = """
                 SELECT aa.member_id,
                        CASE
-                           WHEN COUNT(*) FILTER (WHERE aa.status IN ('ATTENDED','MISSING')) = 0
+                           WHEN COUNT(id) FILTER (WHERE aa.status IN ('ATTENDED','MISSING')) = 0
                            THEN 100.0
                            ELSE
-                               COUNT(*) FILTER (WHERE aa.status = 'ATTENDED') * 100.0
-                               / COUNT(*) FILTER (WHERE aa.status IN ('ATTENDED','MISSING'))
+                               COUNT(id) FILTER (WHERE aa.status = 'ATTENDED') * 100.0
+                               / COUNT(id) FILTER (WHERE aa.status IN ('ATTENDED','MISSING'))
                        END AS assiduity_pct
                 FROM activity_attendance aa
                 JOIN collectivity_activity ca ON ca.id = aa.activity_id
@@ -194,7 +194,7 @@ public class StatisticsRepository {
             String collectivityId, LocalDate from, LocalDate to) {
 
         String countFeesSql = """
-                SELECT COUNT(*) FROM membership_fee
+                SELECT COUNT(id) FROM membership_fee
                 WHERE collectivity_id = ?
                   AND status = 'ACTIVE'
                   AND eligible_from >= ?
@@ -214,7 +214,7 @@ public class StatisticsRepository {
         }
 
         String countMembersSql =
-                "SELECT COUNT(*) FROM member WHERE collectivity_id = ?";
+                "SELECT COUNT(id) FROM member WHERE collectivity_id = ?";
         conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(countMembersSql)) {
             stmt.setString(1, collectivityId);
