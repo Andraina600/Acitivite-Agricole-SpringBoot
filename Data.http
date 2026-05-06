@@ -1,0 +1,552 @@
+### ============================================================
+### 1. CREATION DES COLLECTIVITES
+### ============================================================
+
+POST https://localhost:8080/collectivities
+Content-Type: application/json
+
+[
+  {
+    "location": "Ambatondrazaka",
+    "federationApproval": true,
+    "members": ["C1-M1", "C1-M2", "C1-M3", "C1-M4", "C1-M5", "C1-M6", "C1-M7", "C1-M8"],
+    "structure": {
+      "president": "C1-M1",
+      "vicePresident": "C1-M2",
+      "treasurer": "C1-M4",
+      "secretary": "C1-M3"
+    }
+  },
+  {
+    "location": "Ambatondrazaka",
+    "federationApproval": true,
+    "members": ["C1-M1", "C1-M2", "C1-M3", "C1-M4", "C1-M5", "C1-M6", "C1-M7", "C1-M8"],
+    "structure": {
+      "president": "C1-M5",
+      "vicePresident": "C1-M6",
+      "treasurer": "C1-M8",
+      "secretary": "C1-M7"
+    }
+  },
+  {
+    "location": "Brickaville",
+    "federationApproval": true,
+    "members": ["C3-M1", "C3-M2", "C3-M3", "C3-M4", "C3-M5", "C3-M6", "C3-M7", "C3-M8"],
+    "structure": {
+      "president": "C3-M1",
+      "vicePresident": "C3-M2",
+      "treasurer": "C3-M4",
+      "secretary": "C3-M3"
+    }
+  }
+]
+
+### ============================================================
+### 2. ATTRIBUTION DES IDENTITES (number + name)
+### ============================================================
+
+PUT https://localhost:8080/collectivities/col-1/informations
+Content-Type: application/json
+
+{
+  "number": 1,
+  "name": "Mpanorina"
+}
+
+###
+
+PUT https://localhost:8080/collectivities/col-2/informations
+Content-Type: application/json
+
+{
+  "number": 2,
+  "name": "Ambatondrazaka"
+}
+
+###
+
+PUT http://localhost:8080/collectivities/col-3/informations
+Content-Type: application/json
+
+{
+  "number": 3,
+  "name": "Tantely mamy"
+}
+
+### ============================================================
+### 3. CREATION DES MEMBRES - Collectivite 1
+### ============================================================
+
+POST http://localhost:8080/members
+Content-Type: application/json
+
+[
+  {
+    "id": "C3-M9",
+    "firstName": "Prénom membre 8",
+    "lastName": "Nom membre 8",
+    "birthDate": "1975-08-20",
+    "gender": "MALE",
+    "address": "Lot UV 8 Ambato.",
+    "profession": "Riziculteur",
+    "phoneNumber": 370234567,
+    "email": "member.8@fed-agri.mg",
+    "occupation": "SENIOR",
+    "collectivityIdentifier": "col-3",
+    "referees": ["C3-M6", "C1-M7"],
+    "registrationFeePaid": true,
+    "membershipDuesPaid": true
+  }
+]
+### ============================================================
+### 4. CREATION DES MEMBRES - Collectivite 3
+### (collectivite 2 réutilise les membres C1-M1 à C1-M8)
+### ============================================================
+
+POST http://localhost:8080/members
+Content-Type: application/json
+
+[
+  {
+    "firstName": "Prénom membre 9",
+    "lastName": "Nom membre 9",
+    "birthDate": "1988-01-02",
+    "gender": "MALE",
+    "address": "Lot 33 J Antsirabe",
+    "profession": "Apiculteur",
+    "phoneNumber": 340345670,
+    "email": "member.9@fed-agri.mg",
+    "occupation": "PRESIDENT",
+    "collectivityIdentifier": "col-3",
+    "referees": ["C1-M1", "C1-M2"],
+    "registrationFeePaid": true,
+    "membershipDuesPaid": true
+  },
+  {
+    "firstName": "Prénom membre 10",
+    "lastName": "Nom membre 10",
+    "birthDate": "1982-03-05",
+    "gender": "MALE",
+    "address": "Lot 2 J Antsirabe",
+    "profession": "Agriculteur",
+    "phoneNumber": 338634567,
+    "email": "member.10@fed-agri.mg",
+    "occupation": "VICE_PRESIDENT",
+    "collectivityIdentifier": "col-3",
+    "referees": ["C1-M1", "C1-M2"],
+    "registrationFeePaid": true,
+    "membershipDuesPaid": true
+  },
+  {
+    "firstName": "Prénom membre 11",
+    "lastName": "Nom membre 11",
+    "birthDate": "1992-03-12",
+    "gender": "MALE",
+    "address": "Lot 8 KM Antsirabe",
+    "profession": "Collecteur",
+    "phoneNumber": 338234567,
+    "email": "member.11@fed-agri.mg",
+    "occupation": "SECRETARY",
+    "collectivityIdentifier": "col-3",
+    "referees": ["C3-M1", "C3-M2"],
+    "registrationFeePaid": true,
+    "membershipDuesPaid": true
+  },
+  {
+    "firstName": "Prénom membre 12",
+    "lastName": "Nom membre 12",
+    "birthDate": "1988-05-10",
+    "gender": "FEMALE",
+    "address": "Lot A K 50 Antsirabe",
+    "profession": "Distributeur",
+    "phoneNumber": 382334567,
+    "email": "member.12@fed-agri.mg",
+    "occupation": "TREASURER",
+    "collectivityIdentifier": "col-3",
+    "referees": ["C3-M1", "C3-M2"],
+    "registrationFeePaid": true,
+    "membershipDuesPaid": true
+  },
+  {
+    "firstName": "Prénom membre 13",
+    "lastName": "Nom membre 13",
+    "birthDate": "1999-08-11",
+    "gender": "MALE",
+    "address": "Lot UV 80 Antsirabe.",
+    "profession": "Apiculteur",
+    "phoneNumber": 373365567,
+    "email": "member.13@fed-agri.mg",
+    "occupation": "SENIOR",
+    "collectivityIdentifier": "col-3",
+    "referees": ["C3-M1", "C3-M2"],
+    "registrationFeePaid": true,
+    "membershipDuesPaid": true
+  },
+  {
+    "firstName": "Prénom membre 14",
+    "lastName": "Nom membre 14",
+    "birthDate": "1998-08-09",
+    "gender": "FEMALE",
+    "address": "Lot UV 6 Antsirabe.",
+    "profession": "Apiculteur",
+    "phoneNumber": 378234567,
+    "email": "member.14@fed-agri.mg",
+    "occupation": "SENIOR",
+    "collectivityIdentifier": "col-3",
+    "referees": ["C3-M1", "C3-M2"],
+    "registrationFeePaid": true,
+    "membershipDuesPaid": true
+  },
+  {
+    "firstName": "Prénom membre 15",
+    "lastName": "Nom membre 15",
+    "birthDate": "1998-01-13",
+    "gender": "MALE",
+    "address": "Lot UV 7 Antsirabe",
+    "profession": "Apiculteur",
+    "phoneNumber": 374914567,
+    "email": "member.15@fed-agri.mg",
+    "occupation": "SENIOR",
+    "collectivityIdentifier": "col-3",
+    "referees": ["C3-M1", "C3-M2"],
+    "registrationFeePaid": true,
+    "membershipDuesPaid": true
+  },
+  {
+    "firstName": "Prénom membre 16",
+    "lastName": "Nom membre 16",
+    "birthDate": "1975-08-02",
+    "gender": "MALE",
+    "address": "Lot UV 8 Antsirabe",
+    "profession": "Apiculteur",
+    "phoneNumber": 370634567,
+    "email": "member.16@fed-agri.mg",
+    "occupation": "SENIOR",
+    "collectivityIdentifier": "col-3",
+    "referees": ["C3-M1", "C3-M2"],
+    "registrationFeePaid": true,
+    "membershipDuesPaid": true
+  }
+]
+
+### ============================================================
+### 5. CREATION DES COTISATIONS
+### ============================================================
+
+POST https://localhost:8080/collectivities/col-1/membershipFees
+Content-Type: application/json
+
+[
+  {
+    "label": "Cotisation annuelle",
+    "amount": 100000,
+    "frequency": "ANNUALLY",
+    "eligibleFrom": "2026-01-01"
+  }
+]
+
+###
+
+POST https://localhost:8080/collectivities/col-2/membershipFees
+Content-Type: application/json
+
+[
+  {
+    "label": "Cotisation annuelle",
+    "amount": 100000,
+    "frequency": "ANNUALLY",
+    "eligibleFrom": "2026-01-01"
+  }
+]
+
+###
+
+POST https://localhost:8080/collectivities/col-3/membershipFees
+Content-Type: application/json
+
+[
+  {
+    "label": "Cotisation annuelle",
+    "amount": 50000,
+    "frequency": "ANNUALLY",
+    "eligibleFrom": "2026-01-01"
+  }
+]
+
+### ============================================================
+### 6. CREATION DES COMPTES FINANCIERS
+### (à insérer directement en SQL car pas de endpoint POST /accounts)
+### INSERT INTO financial_account (id, collectivity_id, account_type, balance) VALUES ('C1-A-CASH', 'col-1', 'CASH', 0);
+### INSERT INTO financial_account (id, collectivity_id, account_type, balance) VALUES ('C1-A-MOBILE-1', 'col-1', 'MOBILE', 0);
+### INSERT INTO mobile_money_account_detail (id, holder_name, mobile_banking_service, mobile_number) VALUES ('C1-A-MOBILE-1', 'Mpanorina', 'ORANGE_MONEY', 370489612);
+### INSERT INTO financial_account (id, collectivity_id, account_type, balance) VALUES ('C2-A-CASH', 'col-2', 'CASH', 0);
+### INSERT INTO financial_account (id, collectivity_id, account_type, balance) VALUES ('C2-A-MOBILE-1', 'col-2', 'MOBILE', 0);
+### INSERT INTO mobile_money_account_detail (id, holder_name, mobile_banking_service, mobile_number) VALUES ('C2-A-MOBILE-1', 'Dobo voalohany', 'ORANGE_MONEY', 320489612);
+### INSERT INTO financial_account (id, collectivity_id, account_type, balance) VALUES ('C3-A-CASH', 'col-3', 'CASH', 0);
+### ============================================================
+
+### ============================================================
+### 7. PAIEMENTS - Collectivite 1
+### ============================================================
+
+POST https://localhost:8080/members/C1-M1/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 100000,
+    "membershipFeeIdentifier": "cot-1",
+    "accountCreditedIdentifier": "C1-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M2/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 100000,
+    "membershipFeeIdentifier": "cot-1",
+    "accountCreditedIdentifier": "C1-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M3/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 100000,
+    "membershipFeeIdentifier": "cot-1",
+    "accountCreditedIdentifier": "C1-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M4/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 100000,
+    "membershipFeeIdentifier": "cot-1",
+    "accountCreditedIdentifier": "C1-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M5/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 100000,
+    "membershipFeeIdentifier": "cot-1",
+    "accountCreditedIdentifier": "C1-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M6/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 100000,
+    "membershipFeeIdentifier": "cot-1",
+    "accountCreditedIdentifier": "C1-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M7/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 60000,
+    "membershipFeeIdentifier": "cot-1",
+    "accountCreditedIdentifier": "C1-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M8/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 90000,
+    "membershipFeeIdentifier": "cot-1",
+    "accountCreditedIdentifier": "C1-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+### ============================================================
+### 8. PAIEMENTS - Collectivite 2
+### ============================================================
+
+POST https://localhost:8080/members/C1-M1/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 60000,
+    "membershipFeeIdentifier": "cot-2",
+    "accountCreditedIdentifier": "C2-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M2/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 90000,
+    "membershipFeeIdentifier": "cot-2",
+    "accountCreditedIdentifier": "C2-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M3/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 100000,
+    "membershipFeeIdentifier": "cot-2",
+    "accountCreditedIdentifier": "C2-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M4/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 100000,
+    "membershipFeeIdentifier": "cot-2",
+    "accountCreditedIdentifier": "C2-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M5/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 100000,
+    "membershipFeeIdentifier": "cot-2",
+    "accountCreditedIdentifier": "C2-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M6/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 100000,
+    "membershipFeeIdentifier": "cot-2",
+    "accountCreditedIdentifier": "C2-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M7/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 40000,
+    "membershipFeeIdentifier": "cot-2",
+    "accountCreditedIdentifier": "C2-A-MOBILE-1",
+    "paymentMode": "MOBILE_BANKING"
+  }
+]
+
+###
+
+POST https://localhost:8080/members/C1-M8/payments
+Content-Type: application/json
+
+[
+  {
+    "amount": 60000,
+    "membershipFeeIdentifier": "cot-2",
+    "accountCreditedIdentifier": "C2-A-MOBILE-1",
+    "paymentMode": "MOBILE_BANKING"
+  }
+]
+
+### ============================================================
+### 9. VERIFICATION - GET collectivites
+### ============================================================
+
+GET https://localhost:8080/collectivities/col-1
+
+###
+
+GET https://localhost:8080/collectivities/col-2
+
+###
+
+GET https://localhost:8080/collectivities/col-3
+
+### ============================================================
+### 10. VERIFICATION - GET cotisations
+### ============================================================
+
+GET https://localhost:8080/collectivities/col-1/membershipFees
+
+###
+
+GET https://localhost:8080/collectivities/col-2/membershipFees
+
+###
+
+GET https://localhost:8080/collectivities/col-3/membershipFees
+
+### ============================================================
+### 11. VERIFICATION - GET transactions
+### ============================================================
+
+GET https://localhost:8080/collectivities/col-1/transactions?from=2026-01-01&to=2026-12-31
+
+###
+
+GET https://localhost:8080/collectivities/col-2/transactions?from=2026-01-01&to=2026-12-31
