@@ -243,12 +243,12 @@ Accept: application/json
 
 
 ### 1. Récupérer tous les comptes d'une collectivité (Date par défaut : aujourd'hui)
-GET http://localhost:8080/collectivities/{{collectivityId}}/financialAccounts
+GET http://localhost:8080/collectivities/col-2
 Accept: application/json
 
 ### 2. Récupérer les comptes à une date précise (Paramètre 'at')
 # Utile pour voir l'état des soldes à une date passée
-GET http://localhost:8080/collectivities/{{collectivityId}}/financialAccounts?at=2026-04-23
+GET http://localhost:8080/collectivities/col-1/financialAccounts?at=2026-04-23
 Accept: application/json
 
 ### 3. Test d'erreur : Format de date invalide
