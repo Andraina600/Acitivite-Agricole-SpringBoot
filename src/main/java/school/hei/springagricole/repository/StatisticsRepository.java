@@ -1,8 +1,11 @@
 package school.hei.springagricole.repository;
 
-
 import org.springframework.stereotype.Repository;
 import school.hei.springagricole.config.DataSource;
+import school.hei.springagricole.dto.CollectivityNewMembers;
+import school.hei.springagricole.dto.MemberAssiduity;
+import school.hei.springagricole.dto.MemberEarnedAmount;
+import school.hei.springagricole.dto.MemberUnpaidAmount;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -19,20 +22,29 @@ public class StatisticsRepository {
         this.dataSource = dataSource;
     }
 
-    public Map<String, BigDecimal> findEarnedAmountByMember(
+    // =========================================================================
+    // STATS LOCALES
+    // =========================================================================
+
+    /**
+     * Retourne le montant encaissé par membre pour les cotisations
+     * d'une collectivité sur une période donnée.
+     */
+    public List<MemberEarnedAmount> findEarnedAmountByMember(
             String collectivityId, LocalDate from, LocalDate to) {
 
         String sql = """
-            SELECT mp.member_id, COALESCE(SUM(mp.amount), 0) AS earned
-            FROM member_payment mp
-            JOIN membership_fee mf ON mf.id = mp.membership_fee_id
-            WHERE mf.collectivity_id = ?
-              AND mp.creation_date >= ?
-              AND mp.creation_date <= ?
-            GROUP BY mp.member_id
-            """;
+                SELECT mp.member_id,
+                       COALESCE(SUM(mp.amount), 0) AS earned
+                FROM member_payment mp
+                JOIN membership_fee mf ON mf.id = mp.membership_fee_id
+                WHERE mf.collectivity_id = ?
+                  AND mp.creation_date >= ?
+                  AND mp.creation_date <= ?
+                GROUP BY mp.member_id
+                """;
 
-        Map<String, BigDecimal> result = new LinkedHashMap<>();
+        List<MemberEarnedAmount> result = new ArrayList<>();
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, collectivityId);
@@ -40,7 +52,10 @@ public class StatisticsRepository {
             stmt.setDate(3, Date.valueOf(to));
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                result.put(rs.getString("member_id"), rs.getBigDecimal("earned"));
+                result.add(new MemberEarnedAmount(
+                        rs.getString("member_id"),
+                        rs.getBigDecimal("earned")
+                ));
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error computing earned amounts", e);
@@ -50,116 +65,127 @@ public class StatisticsRepository {
         return result;
     }
 
-    public Map<String, BigDecimal> findUnpaidAmountByMember(
+    /**
+     * Retourne le montant impayé potentiel par membre,
+     * uniquement sur les cotisations ACTIVES de la collectivité.
+     * GREATEST(..., 0) évite les valeurs négatives (surpaiement).
+     */
+    public List<MemberUnpaidAmount> findUnpaidAmountByMember(
             String collectivityId, LocalDate from, LocalDate to) {
 
-        String feesSql = """
-                SELECT id, amount
-                FROM membership_fee
-                WHERE collectivity_id = ?
-                  AND status = 'ACTIVE'
-                  AND eligible_from >= ?
-                  AND eligible_from <= ?
+        String sql = """
+                SELECT m.id AS member_id,
+                       COALESCE(SUM(
+                           GREATEST(
+                               mf.amount - COALESCE(
+                                   (SELECT SUM(mp.amount)
+                                    FROM member_payment mp
+                                    WHERE mp.member_id = m.id
+                                      AND mp.membership_fee_id = mf.id
+                                      AND mp.creation_date >= ?
+                                      AND mp.creation_date <= ?),
+                                   0
+                               ),
+                               0
+                           )
+                       ), 0) AS unpaid
+                FROM member m
+                CROSS JOIN membership_fee mf
+                WHERE m.collectivity_id = ?
+                  AND mf.collectivity_id = ?
+                  AND mf.status = 'ACTIVE'
+                  AND mf.eligible_from >= ?
+                  AND mf.eligible_from <= ?
+                GROUP BY m.id
                 """;
 
-        Map<String, BigDecimal> activeFees = new LinkedHashMap<>();
+        List<MemberUnpaidAmount> result = new ArrayList<>();
         Connection conn = dataSource.getConnection();
-        try (PreparedStatement stmt = conn.prepareStatement(feesSql)) {
-            stmt.setString(1, collectivityId);
-            stmt.setDate(2, Date.valueOf(from));
-            stmt.setDate(3, Date.valueOf(to));
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setDate(1, Date.valueOf(from));
+            stmt.setDate(2, Date.valueOf(to));
+            stmt.setString(3, collectivityId);
+            stmt.setString(4, collectivityId);
+            stmt.setDate(5, Date.valueOf(from));
+            stmt.setDate(6, Date.valueOf(to));
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                activeFees.put(rs.getString("id"), rs.getBigDecimal("amount"));
+                result.add(new MemberUnpaidAmount(
+                        rs.getString("member_id"),
+                        rs.getBigDecimal("unpaid")
+                ));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error loading active membership fees", e);
+            throw new RuntimeException("Error computing unpaid amounts", e);
         } finally {
             dataSource.closeConnection(conn);
         }
-
-        if (activeFees.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        String paymentsSql = """
-                SELECT mp.member_id, mp.membership_fee_id, COALESCE(SUM(mp.amount), 0) AS paid
-                FROM member_payment mp
-                JOIN member m ON m.id = mp.member_id
-                WHERE m.collectivity_id = ?
-                  AND mp.membership_fee_id IN (%s)
-                  AND mp.creation_date >= ?
-                  AND mp.creation_date <= ?
-                GROUP BY mp.member_id, mp.membership_fee_id
-                """.formatted(buildInClause(activeFees.size()));
-
-        Map<String, Map<String, BigDecimal>> paidByMemberAndFee = new LinkedHashMap<>();
-        conn = dataSource.getConnection();
-        try (PreparedStatement stmt = conn.prepareStatement(paymentsSql)) {
-            int idx = 1;
-            stmt.setString(idx++, collectivityId);
-            for (String feeId : activeFees.keySet()) {
-                stmt.setString(idx++, feeId);
-            }
-            stmt.setDate(idx++, Date.valueOf(from));
-            stmt.setDate(idx, Date.valueOf(to));
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                String memberId = rs.getString("member_id");
-                String feeId = rs.getString("membership_fee_id");
-                BigDecimal paid = rs.getBigDecimal("paid");
-                paidByMemberAndFee
-                        .computeIfAbsent(memberId, k -> new LinkedHashMap<>())
-                        .put(feeId, paid);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error computing paid amounts per fee", e);
-        } finally {
-            dataSource.closeConnection(conn);
-        }
-
-        List<String> memberIds = findMemberIdsByCollectivity(collectivityId);
-
-        Map<String, BigDecimal> unpaidByMember = new LinkedHashMap<>();
-        for (String memberId : memberIds) {
-            BigDecimal totalUnpaid = BigDecimal.ZERO;
-            Map<String, BigDecimal> paidForMember =
-                    paidByMemberAndFee.getOrDefault(memberId, Collections.emptyMap());
-
-            for (Map.Entry<String, BigDecimal> feeEntry : activeFees.entrySet()) {
-                String feeId = feeEntry.getKey();
-                BigDecimal feeAmount = feeEntry.getValue();
-                BigDecimal paid = paidForMember.getOrDefault(feeId, BigDecimal.ZERO);
-                BigDecimal diff = feeAmount.subtract(paid);
-                if (diff.compareTo(BigDecimal.ZERO) > 0) {
-                    totalUnpaid = totalUnpaid.add(diff);
-                }
-            }
-            unpaidByMember.put(memberId, totalUnpaid);
-        }
-
-        return unpaidByMember;
+        return result;
     }
 
-    public List<String> findMemberIdsByCollectivity(String collectivityId) {
-        String sql = "SELECT id FROM member WHERE collectivity_id = ?";
-        List<String> ids = new ArrayList<>();
+    /**
+     * Retourne le taux d'assiduité par membre pour les activités
+     * d'une collectivité sur une période donnée.
+     * UNDEFINED est ignoré — seuls ATTENDED et MISSING comptent.
+     */
+    public List<MemberAssiduity> findAssiduityByMember(
+            String collectivityId, LocalDate from, LocalDate to) {
+
+        String sql = """
+                SELECT aa.member_id,
+                       CASE
+                           WHEN COUNT(*) FILTER (WHERE aa.status IN ('ATTENDED','MISSING')) = 0
+                           THEN 100.0
+                           ELSE
+                               COUNT(*) FILTER (WHERE aa.status = 'ATTENDED') * 100.0
+                               / COUNT(*) FILTER (WHERE aa.status IN ('ATTENDED','MISSING'))
+                       END AS assiduity_pct
+                FROM activity_attendance aa
+                JOIN collectivity_activity ca ON ca.id = aa.activity_id
+                WHERE ca.collectivity_id = ?
+                  AND aa.member_id IN (
+                      SELECT id FROM member WHERE collectivity_id = ?
+                  )
+                  AND (
+                        (ca.executive_date IS NOT NULL
+                         AND ca.executive_date >= ?
+                         AND ca.executive_date <= ?)
+                        OR ca.executive_date IS NULL
+                      )
+                GROUP BY aa.member_id
+                """;
+
+        List<MemberAssiduity> result = new ArrayList<>();
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, collectivityId);
+            stmt.setString(2, collectivityId);
+            stmt.setDate(3, Date.valueOf(from));
+            stmt.setDate(4, Date.valueOf(to));
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                ids.add(rs.getString("id"));
+                result.add(new MemberAssiduity(
+                        rs.getString("member_id"),
+                        rs.getDouble("assiduity_pct")
+                ));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error loading member IDs for collectivity", e);
+            throw new RuntimeException("Error computing assiduity by member", e);
         } finally {
             dataSource.closeConnection(conn);
         }
-        return ids;
+        return result;
     }
 
-    public Map<String, Integer> findNewMembersCountByCollectivity(
+    // =========================================================================
+    // STATS GLOBALES
+    // =========================================================================
+
+    /**
+     * Retourne le nombre de nouveaux adhérents par collectivité
+     * dont la date d'adhésion est dans la période donnée.
+     */
+    public List<CollectivityNewMembers> findNewMembersCountByCollectivity(
             LocalDate from, LocalDate to) {
 
         String sql = """
@@ -170,14 +196,17 @@ public class StatisticsRepository {
                 GROUP BY collectivity_id
                 """;
 
-        Map<String, Integer> result = new LinkedHashMap<>();
+        List<CollectivityNewMembers> result = new ArrayList<>();
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setDate(1, Date.valueOf(from));
             stmt.setDate(2, Date.valueOf(to));
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                result.put(rs.getString("collectivity_id"), rs.getInt("cnt"));
+                result.add(new CollectivityNewMembers(
+                        rs.getString("collectivity_id"),
+                        rs.getInt("cnt")
+                ));
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error counting new members", e);
@@ -187,95 +216,110 @@ public class StatisticsRepository {
         return result;
     }
 
+    /**
+     * Calcule le pourcentage de membres à jour dans leurs cotisations ACTIVES.
+     * Un membre est "à jour" s'il a payé au moins le montant de
+     * TOUTES les cotisations actives de la collectivité sur la période.
+     */
     public double computeCurrentDuePercentage(
             String collectivityId, LocalDate from, LocalDate to) {
 
-        List<String> memberIds = findMemberIdsByCollectivity(collectivityId);
-        if (memberIds.isEmpty()) return 0.0;
-
-        String feesSql = """
-            SELECT id, amount
-            FROM membership_fee
-            WHERE collectivity_id = ?
-              AND status = 'ACTIVE'
-              AND eligible_from >= ?
-              AND eligible_from <= ?
-            """;
-
-        Map<String, BigDecimal> activeFees = new LinkedHashMap<>();
+        String countFeesSql = """
+                SELECT COUNT(*) FROM membership_fee
+                WHERE collectivity_id = ?
+                  AND status = 'ACTIVE'
+                  AND eligible_from >= ?
+                  AND eligible_from <= ?
+                """;
         Connection conn = dataSource.getConnection();
-        try (PreparedStatement stmt = conn.prepareStatement(feesSql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(countFeesSql)) {
             stmt.setString(1, collectivityId);
             stmt.setDate(2, Date.valueOf(from));
             stmt.setDate(3, Date.valueOf(to));
             ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                activeFees.put(rs.getString("id"), rs.getBigDecimal("amount"));
-            }
+            if (rs.next() && rs.getInt(1) == 0) return 100.0;
         } catch (SQLException e) {
-            throw new RuntimeException("Error loading fees for due percentage", e);
+            throw new RuntimeException("Error checking active fees", e);
         } finally {
             dataSource.closeConnection(conn);
         }
 
-        if (activeFees.isEmpty()) return 100.0;
-
-        String paymentsSql = """
-            SELECT mp.member_id, mp.membership_fee_id, COALESCE(SUM(mp.amount), 0) AS paid
-            FROM member_payment mp
-            WHERE mp.membership_fee_id IN (%s)
-              AND mp.creation_date >= ?
-              AND mp.creation_date <= ?
-            GROUP BY mp.member_id, mp.membership_fee_id
-            """.formatted(buildInClause(activeFees.size()));
-
-        Map<String, Map<String, BigDecimal>> paidMap = new LinkedHashMap<>();
+        String countMembersSql =
+                "SELECT COUNT(*) FROM member WHERE collectivity_id = ?";
         conn = dataSource.getConnection();
-        try (PreparedStatement stmt = conn.prepareStatement(paymentsSql)) {
-            int idx = 1;
-            for (String feeId : activeFees.keySet()) {
-                stmt.setString(idx++, feeId);
-            }
-            stmt.setDate(idx++, Date.valueOf(from));
-            stmt.setDate(idx, Date.valueOf(to));
+        try (PreparedStatement stmt = conn.prepareStatement(countMembersSql)) {
+            stmt.setString(1, collectivityId);
             ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                paidMap.computeIfAbsent(rs.getString("member_id"), k -> new LinkedHashMap<>())
-                        .put(rs.getString("membership_fee_id"), rs.getBigDecimal("paid"));
-            }
+            if (rs.next() && rs.getInt(1) == 0) return 0.0;
         } catch (SQLException e) {
-            throw new RuntimeException("Error computing payments for due percentage", e);
+            throw new RuntimeException("Error checking members count", e);
         } finally {
             dataSource.closeConnection(conn);
         }
 
-        Set<String> allRelevantMembers = new HashSet<>(memberIds);
-        allRelevantMembers.addAll(paidMap.keySet());
+        String sql = """
+                SELECT AVG(is_up_to_date) * 100.0 AS due_percentage
+                FROM (
+                    SELECT member_id,
+                           CASE WHEN MIN(is_paid) = 1 THEN 1 ELSE 0 END AS is_up_to_date
+                    FROM (
+                        SELECT m.id AS member_id,
+                               mf.id AS fee_id,
+                               CASE
+                                   WHEN COALESCE(
+                                       (SELECT SUM(mp.amount)
+                                        FROM member_payment mp
+                                        WHERE mp.member_id = m.id
+                                          AND mp.membership_fee_id = mf.id
+                                          AND mp.creation_date >= ?
+                                          AND mp.creation_date <= ?),
+                                       0
+                                   ) >= mf.amount
+                                   THEN 1 ELSE 0
+                               END AS is_paid
+                        FROM member m
+                        CROSS JOIN membership_fee mf
+                        WHERE m.collectivity_id = ?
+                          AND mf.collectivity_id = ?
+                          AND mf.status = 'ACTIVE'
+                          AND mf.eligible_from >= ?
+                          AND mf.eligible_from <= ?
+                    ) AS member_fee_status
+                    GROUP BY member_id
+                ) AS member_status
+                """;
 
-        long upToDateCount = allRelevantMembers.stream().filter(memberId -> {
-            Map<String, BigDecimal> paidForMember =
-                    paidMap.getOrDefault(memberId, Collections.emptyMap());
-            for (Map.Entry<String, BigDecimal> fee : activeFees.entrySet()) {
-                BigDecimal paid = paidForMember.getOrDefault(fee.getKey(), BigDecimal.ZERO);
-                if (paid.compareTo(fee.getValue()) < 0) {
-                    return false;
-                }
+        conn = dataSource.getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setDate(1, Date.valueOf(from));
+            stmt.setDate(2, Date.valueOf(to));
+            stmt.setString(3, collectivityId);
+            stmt.setString(4, collectivityId);
+            stmt.setDate(5, Date.valueOf(from));
+            stmt.setDate(6, Date.valueOf(to));
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                double val = rs.getDouble("due_percentage");
+                return rs.wasNull() ? 0.0 : val;
             }
-            return true;
-        }).count();
-
-        return (upToDateCount * 100.0) / allRelevantMembers.size();
+            return 0.0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error computing due percentage", e);
+        } finally {
+            dataSource.closeConnection(conn);
+        }
     }
 
+    /**
+     * Retourne tous les IDs de collectivités existantes.
+     */
     public List<String> findAllCollectivityIds() {
         String sql = "SELECT id FROM collectivity";
         List<String> ids = new ArrayList<>();
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                ids.add(rs.getString("id"));
-            }
+            while (rs.next()) ids.add(rs.getString("id"));
         } catch (SQLException e) {
             throw new RuntimeException("Error loading collectivity IDs", e);
         } finally {
@@ -284,7 +328,22 @@ public class StatisticsRepository {
         return ids;
     }
 
-    private String buildInClause(int size) {
-        return String.join(", ", Collections.nCopies(size, "?"));
+    /**
+     * Retourne les IDs des membres d'une collectivité.
+     */
+    public List<String> findMemberIdsByCollectivity(String collectivityId) {
+        String sql = "SELECT id FROM member WHERE collectivity_id = ?";
+        List<String> ids = new ArrayList<>();
+        Connection conn = dataSource.getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, collectivityId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) ids.add(rs.getString("id"));
+        } catch (SQLException e) {
+            throw new RuntimeException("Error loading member IDs", e);
+        } finally {
+            dataSource.closeConnection(conn);
+        }
+        return ids;
     }
 }
