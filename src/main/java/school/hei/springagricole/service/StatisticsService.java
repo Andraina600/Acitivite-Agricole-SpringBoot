@@ -40,7 +40,6 @@ public class StatisticsService {
                 .orElseThrow(() -> new NotFoundException(
                         "Collectivity not found: " + collectivityId));
 
-        // Récupération des listes typées
         List<MemberEarnedAmount> earnedList =
                 statisticsRepository.findEarnedAmountByMember(collectivityId, from, to);
         List<MemberUnpaidAmount> unpaidList =
@@ -50,7 +49,6 @@ public class StatisticsService {
         List<String> memberIds =
                 statisticsRepository.findMemberIdsByCollectivity(collectivityId);
 
-        // Index par memberId pour lookup O(1)
         Map<String, BigDecimal> earnedIndex = new HashMap<>();
         for (MemberEarnedAmount e : earnedList) {
             earnedIndex.put(e.getMemberId(), e.getEarnedAmount());
@@ -96,7 +94,6 @@ public class StatisticsService {
 
         List<String> collectivityIds = statisticsRepository.findAllCollectivityIds();
 
-        // Index par collectivityId pour lookup O(1)
         List<CollectivityNewMembers> newMembersList =
                 statisticsRepository.findNewMembersCountByCollectivity(from, to);
         Map<String, Integer> newMembersIndex = new HashMap<>();
