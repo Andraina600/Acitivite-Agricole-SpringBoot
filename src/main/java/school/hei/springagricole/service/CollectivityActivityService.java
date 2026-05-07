@@ -9,6 +9,7 @@ import school.hei.springagricole.repository.CollectivityActivityRepository;
 import school.hei.springagricole.repository.CollectivityRepository;
 import school.hei.springagricole.repository.MemberRepository;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -64,7 +65,12 @@ public class CollectivityActivityService {
 
     public List<ActivityMemberAttendance> saveAttendance(
             String collectivityId, String activityId,
-            List<CreateActivityMemberAttendance> requests) {
+            List<CreateActivityMemberAttendance> requests,
+            LocalDate activityDate) {
+
+        if (activityDate == null) {
+            throw new BadRequestException("activityDate query parameter is mandatory");
+        }
 
         collectivityRepository.findById(collectivityId)
                 .orElseThrow(() -> new NotFoundException(
@@ -80,22 +86,23 @@ public class CollectivityActivityService {
                             "Member not found: " + request.getMemberIdentifier()));
 
             if (attendanceRepository.isAlreadyConfirmed(
-                    activityId, request.getMemberIdentifier())) {
+                    activityId, request.getMemberIdentifier(), activityDate)) {
                 throw new BadRequestException(
                         "Attendance already confirmed for member: "
                                 + request.getMemberIdentifier()
+                                + " on " + activityDate
                                 + " — cannot be modified once set to ATTENDED or MISSING");
             }
         }
 
         List<ActivityMemberAttendance> result = new ArrayList<>();
         for (CreateActivityMemberAttendance request : requests) {
-            ActivityMemberAttendance attendance = attendanceRepository.upsert(
+            result.add(attendanceRepository.upsert(
                     activityId,
                     request.getMemberIdentifier(),
-                    request.getAttendanceStatus()
-            );
-            result.add(attendance);
+                    request.getAttendanceStatus(),
+                    activityDate
+            ));
         }
         return result;
     }

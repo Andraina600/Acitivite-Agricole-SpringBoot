@@ -6,10 +6,8 @@ import school.hei.springagricole.entity.ActivityMemberAttendance;
 import school.hei.springagricole.entity.MemberDescription;
 import school.hei.springagricole.entity.enums.AttendanceStatus;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,34 +22,36 @@ public class ActivityAttendanceRepository {
     }
 
     public ActivityMemberAttendance upsert(String activityId, String memberId,
-                                           AttendanceStatus status) {
+                                           AttendanceStatus status, LocalDate activityDate) {
         Connection conn = dataSource.getConnection();
         try {
             conn.setAutoCommit(false);
 
-            Optional<ActivityMemberAttendance> existing = findByActivityAndMember(
-                    conn, activityId, memberId);
+            Optional<ActivityMemberAttendance> existing =
+                    findByActivityAndMemberAndDate(conn, activityId, memberId, activityDate);
 
             String attendanceId;
             if (existing.isPresent()) {
                 attendanceId = existing.get().getId();
                 try (PreparedStatement stmt = conn.prepareStatement(
                         "UPDATE activity_attendance SET status = ? " +
-                                "WHERE activity_id = ? AND member_id = ?")) {
+                                "WHERE activity_id = ? AND member_id = ? AND activity_date = ?")) {
                     stmt.setString(1, status.name());
                     stmt.setString(2, activityId);
                     stmt.setString(3, memberId);
+                    stmt.setDate(4, Date.valueOf(activityDate));
                     stmt.executeUpdate();
                 }
             } else {
                 attendanceId = UUID.randomUUID().toString();
                 try (PreparedStatement stmt = conn.prepareStatement(
-                        "INSERT INTO activity_attendance (id, activity_id, member_id, status) " +
-                                "VALUES (?, ?, ?, ?)")) {
+                        "INSERT INTO activity_attendance (id, activity_id, member_id, status, activity_date) " +
+                                "VALUES (?, ?, ?, ?, ?)")) {
                     stmt.setString(1, attendanceId);
                     stmt.setString(2, activityId);
                     stmt.setString(3, memberId);
                     stmt.setString(4, status.name());
+                    stmt.setDate(5, Date.valueOf(activityDate));
                     stmt.executeUpdate();
                 }
             }
@@ -75,9 +75,10 @@ public class ActivityAttendanceRepository {
     public List<ActivityMemberAttendance> findByActivityId(String activityId) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT aa.id, aa.member_id, aa.status " +
+                "SELECT aa.id, aa.member_id, aa.status, aa.activity_date " +
                         "FROM activity_attendance aa " +
-                        "WHERE aa.activity_id = ?")) {
+                        "WHERE aa.activity_id = ? " +
+                        "ORDER BY aa.activity_date")) {
 
             stmt.setString(1, activityId);
             ResultSet rs = stmt.executeQuery();
@@ -99,19 +100,19 @@ public class ActivityAttendanceRepository {
         }
     }
 
-    public boolean isAlreadyConfirmed(String activityId, String memberId) {
+    public boolean isAlreadyConfirmed(String activityId, String memberId, LocalDate activityDate) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
                 "SELECT status FROM activity_attendance " +
-                        "WHERE activity_id = ? AND member_id = ?")) {
+                        "WHERE activity_id = ? AND member_id = ? AND activity_date = ?")) {
             stmt.setString(1, activityId);
             stmt.setString(2, memberId);
+            stmt.setDate(3, Date.valueOf(activityDate));
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 String status = rs.getString("status");
                 return "ATTENDED".equals(status) || "MISSING".equals(status);
             }
-
             return false;
         } catch (SQLException e) {
             throw new RuntimeException("Error checking attendance status", e);
@@ -120,13 +121,15 @@ public class ActivityAttendanceRepository {
         }
     }
 
-    private Optional<ActivityMemberAttendance> findByActivityAndMember(
-            Connection conn, String activityId, String memberId) throws SQLException {
+    private Optional<ActivityMemberAttendance> findByActivityAndMemberAndDate(
+            Connection conn, String activityId, String memberId, LocalDate activityDate)
+            throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(
                 "SELECT id, status FROM activity_attendance " +
-                        "WHERE activity_id = ? AND member_id = ?")) {
+                        "WHERE activity_id = ? AND member_id = ? AND activity_date = ?")) {
             stmt.setString(1, activityId);
             stmt.setString(2, memberId);
+            stmt.setDate(3, Date.valueOf(activityDate));
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return Optional.of(new ActivityMemberAttendance(

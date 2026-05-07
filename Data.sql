@@ -291,3 +291,150 @@ UPDATE financial_account SET balance = 150000 WHERE id = 'C3-A-BANK-1';
 UPDATE financial_account SET balance = 95000  WHERE id = 'C3-A-BANK-2';
 UPDATE financial_account SET balance = 30000  WHERE id = 'C3-A-MOBILE-1';
 UPDATE financial_account SET balance = 60000  WHERE id = 'C3-A-CASH';
+
+-- Eto le bonus 1
+DROP TABLE IF EXISTS activity_attendance CASCADE;
+DROP TABLE IF EXISTS activity_occupation_concerned CASCADE;
+DROP TABLE IF EXISTS collectivity_activity CASCADE;
+
+CREATE TABLE collectivity_activity (
+                                       id                      VARCHAR(50)  PRIMARY KEY,
+                                       collectivity_id         VARCHAR(50)  NOT NULL REFERENCES collectivity(id),
+                                       label                   VARCHAR(255) NOT NULL,
+                                       activity_type           VARCHAR(20)  NOT NULL
+                                           CHECK (activity_type IN ('MEETING', 'TRAINING', 'PUNCTUAL')),
+                                       executive_date          DATE,
+                                       recurrence_week_ordinal INTEGER CHECK (recurrence_week_ordinal BETWEEN 1 AND 5),
+                                       recurrence_day_of_week  VARCHAR(2)
+                                           CHECK (recurrence_day_of_week IN ('MO','TU','WE','TH','FR','SA','SU')),
+                                       CONSTRAINT chk_recurrence_xor_date
+                                           CHECK (
+                                               (executive_date IS NOT NULL AND recurrence_week_ordinal IS NULL AND recurrence_day_of_week IS NULL)
+                                                   OR
+                                               (executive_date IS NULL AND recurrence_week_ordinal IS NOT NULL AND recurrence_day_of_week IS NOT NULL)
+                                               )
+);
+
+CREATE TABLE activity_occupation_concerned (
+                                               activity_id VARCHAR(50) NOT NULL REFERENCES collectivity_activity(id) ON DELETE CASCADE,
+                                               occupation  VARCHAR(50) NOT NULL
+                                                   CHECK (occupation IN ('JUNIOR','SENIOR','SECRETARY','TREASURER','VICE_PRESIDENT','PRESIDENT')),
+                                               PRIMARY KEY (activity_id, occupation)
+);
+
+CREATE TABLE activity_attendance (
+                                     id            VARCHAR(50) PRIMARY KEY,
+                                     activity_id   VARCHAR(50) NOT NULL REFERENCES collectivity_activity(id),
+                                     member_id     VARCHAR(50) NOT NULL REFERENCES member(id),
+                                     status        VARCHAR(20) NOT NULL DEFAULT 'UNDEFINED'
+                                         CHECK (status IN ('MISSING', 'ATTENDED', 'UNDEFINED')),
+                                     activity_date DATE        NOT NULL,
+                                     UNIQUE (activity_id, member_id, activity_date)
+);
+
+INSERT INTO collectivity_activity (id, collectivity_id, label, activity_type, executive_date, recurrence_week_ordinal, recurrence_day_of_week)
+VALUES
+    ('act-1', 'col-1', 'AG1',              'MEETING',  NULL,         1, 'SA'),
+    ('act-2', 'col-1', 'Formation de base', 'TRAINING', NULL,         2, 'SU'),
+    ('act-3', 'col-2', 'AG2',              'MEETING',  NULL,         1, 'SU'),
+    ('act-4', 'col-2', 'Formation de base', 'TRAINING', NULL,         3, 'SU'),
+    ('act-5', 'col-2', 'Perfectionnement',  'PUNCTUAL', '3036-04-30', NULL, NULL),
+    ('act-6', 'col-3', 'AG3',              'MEETING',  NULL,         1, 'FR'),
+    ('act-7', 'col-3', 'Formation de base', 'TRAINING', NULL,         4, 'WE');
+
+INSERT INTO activity_occupation_concerned (activity_id, occupation) VALUES
+                                                                        ('act-1','JUNIOR'),('act-1','SENIOR'),('act-1','SECRETARY'),
+                                                                        ('act-1','TREASURER'),('act-1','VICE_PRESIDENT'),('act-1','PRESIDENT'),
+
+                                                                        ('act-2','JUNIOR'),
+
+                                                                        ('act-3','JUNIOR'),('act-3','SENIOR'),('act-3','SECRETARY'),
+                                                                        ('act-3','TREASURER'),('act-3','VICE_PRESIDENT'),('act-3','PRESIDENT'),
+
+                                                                        ('act-4','JUNIOR'),
+
+                                                                        ('act-5','SENIOR'),
+
+                                                                        ('act-6','JUNIOR'),('act-6','SENIOR'),('act-6','SECRETARY'),
+                                                                        ('act-6','TREASURER'),('act-6','VICE_PRESIDENT'),('act-6','PRESIDENT'),
+
+                                                                        ('act-7','JUNIOR');
+
+-- Mars 2026 (1er samedi = 07/03/2026)
+INSERT INTO activity_attendance (id, activity_id, member_id, status, activity_date) VALUES
+                                                                                        ('ATT-act1-M1-mar', 'act-1', 'C1-M1', 'ATTENDED', '2026-03-07'),
+                                                                                        ('ATT-act1-M2-mar', 'act-1', 'C1-M2', 'ATTENDED', '2026-03-07'),
+                                                                                        ('ATT-act1-M3-mar', 'act-1', 'C1-M3', 'ATTENDED', '2026-03-07'),
+                                                                                        ('ATT-act1-M4-mar', 'act-1', 'C1-M4', 'ATTENDED', '2026-03-07'),
+                                                                                        ('ATT-act1-M5-mar', 'act-1', 'C1-M5', 'ATTENDED', '2026-03-07'),
+                                                                                        ('ATT-act1-M6-mar', 'act-1', 'C1-M6', 'ATTENDED', '2026-03-07'),
+                                                                                        ('ATT-act1-M7-mar', 'act-1', 'C1-M7', 'MISSING',  '2026-03-07'),
+                                                                                        ('ATT-act1-M8-mar', 'act-1', 'C1-M8', 'MISSING',  '2026-03-07');
+
+-- Avril 2026 (1er samedi = 04/04/2026)
+INSERT INTO activity_attendance (id, activity_id, member_id, status, activity_date) VALUES
+                                                                                        ('ATT-act1-M1-avr', 'act-1', 'C1-M1', 'ATTENDED', '2026-04-04'),
+                                                                                        ('ATT-act1-M2-avr', 'act-1', 'C1-M2', 'ATTENDED', '2026-04-04'),
+                                                                                        ('ATT-act1-M3-avr', 'act-1', 'C1-M3', 'MISSING',  '2026-04-04'),
+                                                                                        ('ATT-act1-M4-avr', 'act-1', 'C1-M4', 'MISSING',  '2026-04-04'),
+                                                                                        ('ATT-act1-M5-avr', 'act-1', 'C1-M5', 'ATTENDED', '2026-04-04'),
+                                                                                        ('ATT-act1-M6-avr', 'act-1', 'C1-M6', 'ATTENDED', '2026-04-04'),
+                                                                                        ('ATT-act1-M7-avr', 'act-1', 'C1-M7', 'ATTENDED', '2026-04-04'),
+                                                                                        ('ATT-act1-M8-avr', 'act-1', 'C1-M8', 'ATTENDED', '2026-04-04');
+
+-- Mars 2026 (1er dimanche = 08/03/2026)
+INSERT INTO activity_attendance (id, activity_id, member_id, status, activity_date) VALUES
+                                                                                        ('ATT-act3-M1-mar', 'act-3', 'C1-M1', 'ATTENDED', '2026-03-08'),
+                                                                                        ('ATT-act3-M2-mar', 'act-3', 'C1-M2', 'ATTENDED', '2026-03-08'),
+                                                                                        ('ATT-act3-M3-mar', 'act-3', 'C1-M3', 'MISSING',  '2026-03-08'),
+                                                                                        ('ATT-act3-M4-mar', 'act-3', 'C1-M4', 'MISSING',  '2026-03-08'),
+                                                                                        ('ATT-act3-M5-mar', 'act-3', 'C1-M5', 'ATTENDED', '2026-03-08'),
+                                                                                        ('ATT-act3-M6-mar', 'act-3', 'C1-M6', 'ATTENDED', '2026-03-08'),
+                                                                                        ('ATT-act3-M7-mar', 'act-3', 'C1-M7', 'ATTENDED', '2026-03-08'),
+                                                                                        ('ATT-act3-M8-mar', 'act-3', 'C1-M8', 'ATTENDED', '2026-03-08');
+
+-- Avril 2026 (1er dimanche = 05/04/2026)
+INSERT INTO activity_attendance (id, activity_id, member_id, status, activity_date) VALUES
+                                                                                        ('ATT-act3-M1-avr', 'act-3', 'C1-M1', 'ATTENDED', '2026-04-05'),
+                                                                                        ('ATT-act3-M2-avr', 'act-3', 'C1-M2', 'ATTENDED', '2026-04-05'),
+                                                                                        ('ATT-act3-M3-avr', 'act-3', 'C1-M3', 'MISSING',  '2026-04-05'),
+                                                                                        ('ATT-act3-M4-avr', 'act-3', 'C1-M4', 'ATTENDED', '2026-04-05'),
+                                                                                        ('ATT-act3-M5-avr', 'act-3', 'C1-M5', 'ATTENDED', '2026-04-05'),
+                                                                                        ('ATT-act3-M6-avr', 'act-3', 'C1-M6', 'ATTENDED', '2026-04-05'),
+                                                                                        ('ATT-act3-M7-avr', 'act-3', 'C1-M7', 'ATTENDED', '2026-04-05'),
+                                                                                        ('ATT-act3-M8-avr', 'act-3', 'C1-M8', 'MISSING',  '2026-04-05');
+
+INSERT INTO activity_attendance (id, activity_id, member_id, status, activity_date) VALUES
+                                                                                        ('ATT-act5-M1', 'act-5', 'C1-M1', 'ATTENDED',  '2026-04-30'),
+                                                                                        ('ATT-act5-M2', 'act-5', 'C1-M2', 'ATTENDED',  '2026-04-30'),
+                                                                                        ('ATT-act5-M3', 'act-5', 'C1-M3', 'ATTENDED',  '2026-04-30'),
+                                                                                        ('ATT-act5-M4', 'act-5', 'C1-M4', 'MISSING',   '2026-04-30'),
+                                                                                        ('ATT-act5-M5', 'act-5', 'C1-M5', 'UNDEFINED', '2026-04-30'),
+                                                                                        ('ATT-act5-M6', 'act-5', 'C1-M6', 'UNDEFINED', '2026-04-30'),
+                                                                                        ('ATT-act5-M7', 'act-5', 'C1-M7', 'UNDEFINED', '2026-04-30'),
+                                                                                        ('ATT-act5-M8', 'act-5', 'C1-M8', 'UNDEFINED', '2026-04-30');
+
+
+-- Mars 2026 (1er vendredi = 06/03/2026)
+INSERT INTO activity_attendance (id, activity_id, member_id, status, activity_date) VALUES
+                                                                                        ('ATT-act6-M1-mar', 'act-6', 'C3-M1', 'ATTENDED', '2026-03-06'),
+                                                                                        ('ATT-act6-M2-mar', 'act-6', 'C3-M2', 'ATTENDED', '2026-03-06'),
+                                                                                        ('ATT-act6-M3-mar', 'act-6', 'C3-M3', 'ATTENDED', '2026-03-06'),
+                                                                                        ('ATT-act6-M4-mar', 'act-6', 'C3-M4', 'ATTENDED', '2026-03-06'),
+                                                                                        ('ATT-act6-M5-mar', 'act-6', 'C3-M5', 'ATTENDED', '2026-03-06'),
+                                                                                        ('ATT-act6-M6-mar', 'act-6', 'C3-M6', 'ATTENDED', '2026-03-06'),
+                                                                                        ('ATT-act6-M7-mar', 'act-6', 'C3-M7', 'MISSING',  '2026-03-06'),
+                                                                                        ('ATT-act6-M8-mar', 'act-6', 'C3-M8', 'MISSING',  '2026-03-06');
+
+-- Avril 2026 (1er vendredi = 03/04/2026)
+INSERT INTO activity_attendance (id, activity_id, member_id, status, activity_date) VALUES
+                                                                                        ('ATT-act6-M1-avr', 'act-6', 'C3-M1', 'ATTENDED', '2026-04-03'),
+                                                                                        ('ATT-act6-M2-avr', 'act-6', 'C3-M2', 'ATTENDED', '2026-04-03'),
+                                                                                        ('ATT-act6-M3-avr', 'act-6', 'C3-M3', 'MISSING',  '2026-04-03'),
+                                                                                        ('ATT-act6-M4-avr', 'act-6', 'C3-M4', 'MISSING',  '2026-04-03'),
+                                                                                        ('ATT-act6-M5-avr', 'act-6', 'C3-M5', 'ATTENDED', '2026-04-03'),
+                                                                                        ('ATT-act6-M6-avr', 'act-6', 'C3-M6', 'ATTENDED', '2026-04-03'),
+                                                                                        ('ATT-act6-M7-avr', 'act-6', 'C3-M7', 'MISSING',  '2026-04-03'),
+                                                                                        ('ATT-act6-M8-avr', 'act-6', 'C3-M8', 'ATTENDED', '2026-04-03'),
+                                                                                        -- C1-M1 membre externe présent à l'activité de col-3
+                                                                                        ('ATT-act6-C1M1-avr', 'act-6', 'C1-M1', 'ATTENDED', '2026-04-03');

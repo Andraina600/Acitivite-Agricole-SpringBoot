@@ -1,6 +1,5 @@
 package school.hei.springagricole.repository;
 
-
 import org.springframework.stereotype.Repository;
 import school.hei.springagricole.config.DataSource;
 import school.hei.springagricole.entity.CollectivityActivity;
@@ -74,7 +73,9 @@ public class CollectivityActivityRepository {
                     }
                 }
 
-                initAttendance(conn, activity);
+                if (activity.getExecutiveDate() != null) {
+                    initAttendanceForPunctual(conn, activity);
+                }
             }
 
             conn.commit();
@@ -94,9 +95,7 @@ public class CollectivityActivityRepository {
     public List<CollectivityActivity> findByCollectivityId(String collectivityId) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT id, collectivity_id, label, activity_type, executive_date, recurrence_week_ordinal," +
-                        " recurrence_day_of_week " +
-                     "FROM collectivity_activity WHERE collectivity_id = ?")) {
+                "SELECT id, collectivity_id, label, activity_type, executive_date, recurrence_week_ordinal, recurrence_day_of_week FROM collectivity_activity WHERE collectivity_id = ?")) {
 
             stmt.setString(1, collectivityId);
             ResultSet rs = stmt.executeQuery();
@@ -117,9 +116,7 @@ public class CollectivityActivityRepository {
     public Optional<CollectivityActivity> findById(String id) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT id, collectivity_id, label, activity_type, \" +\n" +
-                        "\" executive_date, recurrence_week_ordinal, recurrence_day_of_week " +
-                     "FROM collectivity_activity WHERE id = ?")) {
+                "SELECT id, collectivity_id, label, activity_type, executive_date, recurrence_week_ordinal, recurrence_day_of_week FROM collectivity_activity WHERE id = ?")) {
 
             stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
@@ -135,7 +132,7 @@ public class CollectivityActivityRepository {
         }
     }
 
-    private void initAttendance(Connection conn, CollectivityActivity activity)
+    private void initAttendanceForPunctual(Connection conn, CollectivityActivity activity)
             throws SQLException {
 
         List<String> memberIds = new ArrayList<>();
@@ -170,12 +167,13 @@ public class CollectivityActivityRepository {
         if (memberIds.isEmpty()) return;
 
         try (PreparedStatement stmt = conn.prepareStatement(
-                "INSERT INTO activity_attendance (id, activity_id, member_id, status) " +
-                        "VALUES (?, ?, ?, 'UNDEFINED')")) {
+                "INSERT INTO activity_attendance (id, activity_id, member_id, status, activity_date) " +
+                        "VALUES (?, ?, ?, 'UNDEFINED', ?)")) {
             for (String memberId : memberIds) {
                 stmt.setString(1, UUID.randomUUID().toString());
                 stmt.setString(2, activity.getId());
                 stmt.setString(3, memberId);
+                stmt.setDate(4, Date.valueOf(activity.getExecutiveDate()));
                 stmt.addBatch();
             }
             stmt.executeBatch();

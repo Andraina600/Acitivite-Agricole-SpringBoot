@@ -282,7 +282,7 @@ Content-Type: application/json
 ###
 
 ### GET attendance
-GET http://localhost:8080/collectivities/col-1/activities/{activityId}/attendance
+GET http://localhost:8080/collectivities/col-1/activities/act-1/attendance
 x-api-key: agri-secure-key
 
 ###
