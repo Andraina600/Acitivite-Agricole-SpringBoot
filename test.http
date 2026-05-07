@@ -1,370 +1,266 @@
-### ============================================================
-### STATISTIQUES LOCALES - Collectivité 1
-### Attendu : earnedAmount et unpaidAmount par membre
-### C1-M1 à C1-M6 ont payé 100 000 (cotisation = 100 000) → unpaid = 0
-### C1-M7 a payé 60 000 (cotisation = 100 000) → unpaid = 40 000
-### C1-M8 a payé 90 000 (cotisation = 100 000) → unpaid = 10 000
-### ============================================================
+### Base URL
+@baseUrl = http://localhost:8080
 
-GET http://localhost:8080/collectivities/col-1/statistics?from=2026-01-01&to=2026-12-31
+### Remplace cet UUID par celui retourné après POST /collectivities
+@collectivityId = 0e49ff72-5efd-45d9-b5b8-2dd6978e7254
 
-###
-
-### ============================================================
-### STATISTIQUES LOCALES - Collectivité 2
-### C1-M1 a payé 60 000 (cotisation = 100 000) → unpaid = 40 000
-### C1-M2 a payé 90 000 (cotisation = 100 000) → unpaid = 10 000
-### C1-M3 à C1-M6 ont payé 100 000 → unpaid = 0
-### C1-M7 a payé 40 000 → unpaid = 60 000
-### C1-M8 a payé 60 000 → unpaid = 40 000
-### ============================================================
-
-GET http://localhost:8080/collectivities/col-2/statistics?from=2026-01-01&to=2026-12-31
-
-###
-
-### ============================================================
-### STATISTIQUES LOCALES - Collectivité 3
-### Aucun paiement effectué → earnedAmount = 0, unpaidAmount = 50 000 par membre
-### ============================================================
-
-GET http://localhost:8080/collectivities/col-3/statistics?from=2026-01-01&to=2026-12-31
-
-###
-
-### ============================================================
-### STATISTIQUES LOCALES - Période restreinte (janvier uniquement)
-### ============================================================
-
-GET http://localhost:8080/collectivities/col-1/statistics?from=2026-01-01&to=2026-01-31
-
-###
-
-### ============================================================
-### STATISTIQUES GLOBALES - Toutes les collectivités
-### Attendu pour col-1 : 6/8 membres à jour → 75%, nouveaux membres selon admission_date
-### Attendu pour col-2 : 4/8 membres à jour → 50%
-### Attendu pour col-3 : 0/8 membres à jour → 0%
-### ============================================================
-
-GET http://localhost:8080/collectivities/statistics?from=2026-01-01&to=2026-12-31
-
-###
-
-### ============================================================
-### STATISTIQUES GLOBALES - Période restreinte
-### ============================================================
-
-GET http://localhost:8080/collectivities/statistics?from=2026-01-01&to=2026-06-30
-
-###
-
-### ============================================================
-### TEST - Cotisation INACTIVE ignorée dans le calcul
-### 1. Désactiver cot-1 directement en base :
-###    UPDATE membership_fee SET status = 'INACTIVE' WHERE id = 'cot-1';
-### 2. Relancer ce test → unpaidAmount doit être 0 pour tous les membres
-###    car la seule cotisation est inactive
-### ============================================================
-
-GET http://localhost:8080/collectivities/col-1/statistics?from=2026-01-01&to=2026-12-31
-
-###
-
-### ============================================================
-### TEST - Collectivité inexistante → attendu 404
-### ============================================================
-
-GET http://localhost:8080/collectivities/col-999/statistics?from=2026-01-01&to=2026-12-31
-
-###
-
-### ============================================================
-### TEST - Dates invalides (from > to) → attendu 400
-### ============================================================
-
-GET http://localhost:8080/collectivities/col-1/statistics?from=2026-12-31&to=2026-01-01
-
-###
-
-GET http://localhost:8080/collectivities/statistics?from=2026-12-31&to=2026-01-01
-
-###
-
-### ============================================================
-### 1. CREATION D'ACTIVITES - Collectivité 1
-### ============================================================
-
-### Activité récurrente : assemblée générale tous les 2ème dimanche du mois
-POST http://localhost:8080/collectivities/col-1/activities
+### ================================================================
+### POST /collectivities — TEST 1 : Création réussie (201)
+###   ✅ federationApproval = true
+###   ✅ 10 membres dont 5 avec > 6 mois d'ancienneté
+###   ✅ structure complète
+### ================================================================
+POST {{baseUrl}}/collectivities
 Content-Type: application/json
 
 [
   {
-    "label": "Assemblée générale mensuelle",
-    "activityType": "MEETING",
-    "memberOccupationConcerned": [],
-    "recurrenceRule": {
-      "weekOrdinal": 2,
-      "dayOfWeek": "SU"
+    "location": "Antananarivo",
+    "federationApproval": true,
+    "members": [
+      "11111111-1111-1111-1111-111111111111",
+      "22222222-2222-2222-2222-222222222222",
+      "33333333-3333-3333-3333-333333333333",
+      "44444444-4444-4444-4444-444444444444",
+      "55555555-5555-5555-5555-555555555555",
+      "66666666-6666-6666-6666-666666666666",
+      "77777777-7777-7777-7777-777777777777",
+      "88888888-8888-8888-8888-888888888888",
+      "99999999-9999-9999-9999-999999999999",
+      "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    ],
+    "structure": {
+      "president":     "11111111-1111-1111-1111-111111111111",
+      "vicePresident": "22222222-2222-2222-2222-222222222222",
+      "treasurer":     "33333333-3333-3333-3333-333333333333",
+      "secretary":     "44444444-4444-4444-4444-444444444444"
     }
   }
 ]
 
 ###
-
-### Activité récurrente : formation obligatoire juniors tous les 4ème samedi du mois
-POST http://localhost:8080/collectivities/col-1/activities
+### ================================================================
+### POST /collectivities — TEST 2 : Sans approbation (400)
+###   ❌ federationApproval = false
+### ================================================================
+POST {{baseUrl}}/collectivities
 Content-Type: application/json
 
 [
   {
-    "label": "Formation obligatoire juniors",
-    "activityType": "TRAINING",
-    "memberOccupationConcerned": ["JUNIOR"],
-    "recurrenceRule": {
-      "weekOrdinal": 4,
-      "dayOfWeek": "SA"
+    "location": "Fianarantsoa",
+    "federationApproval": false,
+    "members": [
+      "11111111-1111-1111-1111-111111111111",
+      "22222222-2222-2222-2222-222222222222",
+      "33333333-3333-3333-3333-333333333333",
+      "44444444-4444-4444-4444-444444444444",
+      "55555555-5555-5555-5555-555555555555",
+      "66666666-6666-6666-6666-666666666666",
+      "77777777-7777-7777-7777-777777777777",
+      "88888888-8888-8888-8888-888888888888",
+      "99999999-9999-9999-9999-999999999999",
+      "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    ],
+    "structure": {
+      "president":     "11111111-1111-1111-1111-111111111111",
+      "vicePresident": "22222222-2222-2222-2222-222222222222",
+      "treasurer":     "33333333-3333-3333-3333-333333333333",
+      "secretary":     "44444444-4444-4444-4444-444444444444"
     }
   }
 ]
 
 ###
-
-### Activité exceptionnelle à date fixe : formation thématique
-POST http://localhost:8080/collectivities/col-1/activities
+### ================================================================
+### POST /collectivities — TEST 3 : Moins de 10 membres (400)
+###   ❌ seulement 3 membres
+### ================================================================
+POST {{baseUrl}}/collectivities
 Content-Type: application/json
 
 [
   {
-    "label": "Formation technique riziculture",
-    "activityType": "TRAINING",
-    "memberOccupationConcerned": [],
-    "executiveDate": "2026-06-15"
-  }
-]
-
-###
-
-### Activité pour membres SENIOR uniquement
-POST http://localhost:8080/collectivities/col-1/activities
-Content-Type: application/json
-
-[
-  {
-    "label": "Réunion des membres confirmés",
-    "activityType": "OTHER",
-    "memberOccupationConcerned": ["SENIOR", "PRESIDENT", "VICE_PRESIDENT", "TREASURER", "SECRETARY"],
-    "executiveDate": "2026-07-10"
-  }
-]
-
-###
-
-### Plusieurs activités en une seule requête pour col-2
-POST http://localhost:8080/collectivities/col-2/activities
-Content-Type: application/json
-
-[
-  {
-    "label": "Assemblée générale mensuelle",
-    "activityType": "MEETING",
-    "memberOccupationConcerned": [],
-    "recurrenceRule": {
-      "weekOrdinal": 1,
-      "dayOfWeek": "SA"
-    }
-  },
-  {
-    "label": "Formation pisciculture",
-    "activityType": "TRAINING",
-    "memberOccupationConcerned": [],
-    "executiveDate": "2026-05-20"
-  }
-]
-
-### ============================================================
-### 2. CAS D'ERREUR - Création d'activités
-### ============================================================
-
-### Erreur 400 : recurrenceRule ET executiveDate fournis en même temps
-POST http://localhost:8080/collectivities/col-1/activities
-Content-Type: application/json
-
-[
-  {
-    "label": "Activité invalide",
-    "activityType": "MEETING",
-    "memberOccupationConcerned": [],
-    "recurrenceRule": {
-      "weekOrdinal": 2,
-      "dayOfWeek": "SU"
-    },
-    "executiveDate": "2026-06-15"
-  }
-]
-
-###
-
-### Erreur 400 : ni recurrenceRule ni executiveDate fournis
-POST http://localhost:8080/collectivities/col-1/activities
-Content-Type: application/json
-
-[
-  {
-    "label": "Activité sans date",
-    "activityType": "MEETING",
-    "memberOccupationConcerned": []
-  }
-]
-
-###
-
-### Erreur 400 : weekOrdinal invalide (> 5)
-POST http://localhost:8080/collectivities/col-1/activities
-Content-Type: application/json
-
-[
-  {
-    "label": "Activité invalide",
-    "activityType": "MEETING",
-    "memberOccupationConcerned": [],
-    "recurrenceRule": {
-      "weekOrdinal": 6,
-      "dayOfWeek": "MO"
+    "location": "Toamasina",
+    "federationApproval": true,
+    "members": [
+      "11111111-1111-1111-1111-111111111111",
+      "22222222-2222-2222-2222-222222222222",
+      "33333333-3333-3333-3333-333333333333"
+    ],
+    "structure": {
+      "president":     "11111111-1111-1111-1111-111111111111",
+      "vicePresident": "22222222-2222-2222-2222-222222222222",
+      "treasurer":     "33333333-3333-3333-3333-333333333333",
+      "secretary":     "44444444-4444-4444-4444-444444444444"
     }
   }
 ]
 
 ###
+GET {{baseUrl}}/members/07cadb5a-c35c-4d0f-a239-36e486d26344
+Accept: application/json
 
-### Erreur 404 : collectivité inexistante
-POST http://localhost:8080/collectivities/col-999/activities
+###
+### ================================================================
+### PATCH /collectivities/{id}/identity — TEST 4 : Attribution réussie (200)
+### ⚠️  Remplace @collectivityId par l'UUID retourné dans TEST 1
+###   ✅ number et name uniques, jamais assignés
+### ================================================================
+PUT {{baseUrl}}/collectivities/{{collectivityId}}/informations
+Content-Type: application/json
+
+{
+  "number": 2,
+  "name": "Collectivité Agricole Tana"
+}
+
+###
+### ================================================================
+### PATCH /collectivities/{id}/identity — TEST 5 : Déjà assigné (400)
+### Relancer après TEST 4 sur le même UUID
+###   ❌ number et name déjà attribués → ne peut plus être changé
+### ================================================================
+PUT {{baseUrl}}/collectivities/{{collectivityId}}/informations
+Content-Type: application/json
+
+{
+  "number": 2,
+  "name": "Collectivité Agricole Vakinankaratra"
+}
+
+###
+### ================================================================
+### PATCH /collectivities/{id}/identity — TEST 6 : Collectivité introuvable (404)
+###   ❌ UUID inexistant en base
+### ================================================================
+PUT {{baseUrl}}/collectivities/00000000-0000-0000-0000-000000000000/informations
+Content-Type: application/json
+
+{
+  "number": 3,
+  "name": "Collectivité Fantôme"
+}
+
+###
+### ================================================================
+### POST /members — TEST 7 : Admission réussie (201)
+### ⚠️  Les parrains bbbbbbbb et cccccccc doivent être membres
+###    de la collectivité créée dans TEST 1
+###   ✅ paiements OK, infos complètes, 2 parrains SENIOR internes
+### ================================================================
+POST {{baseUrl}}/members
 Content-Type: application/json
 
 [
   {
-    "label": "Test",
-    "activityType": "MEETING",
-    "memberOccupationConcerned": [],
-    "executiveDate": "2026-06-15"
+    "firstName": "Toky",
+    "lastName": "Andriamananoro",
+    "birthDate": "2002-05-20",
+    "gender": "MALE",
+    "address": "Lot II N 45 Ankatso",
+    "profession": "Étudiant en Agronomie",
+    "phoneNumber": 345678901,
+    "email": "toky.niry@gmail.com",
+    "occupation": "JUNIOR",
+    "collectivityIdentifier": "0e49ff72-5efd-45d9-b5b8-2dd6978e7254",
+    "referees": ["M1", "M3"],
+    "registrationFeePaid": true,
+    "membershipDuesPaid": true
   }
 ]
 
-### ============================================================
-### 3. GET ACTIVITES
-### ============================================================
-
-### Liste des activités de col-1
-GET http://localhost:8080/collectivities/col-1/activities
-
 ###
 
-### Liste des activités de col-2
-GET http://localhost:8080/collectivities/col-2/activities
-
-###
-
-### Erreur 404 : collectivité inexistante
-GET http://localhost:8080/collectivities/col-999/activities
-
-### ============================================================
-### 4. ENREGISTREMENT DES PRESENCES
-### Remplace {activityId} par l'id retourné lors de la création
-### ============================================================
-
-### POST attendance - marquer des membres présents et absents
-### (remplace act-id-1 par le vrai id de l'activité "Assemblée générale mensuelle")
-POST http://localhost:8080/collectivities/col-1/activities/c67658d7-eb5a-4217-a30b-b59997ec3c45/attendance
+### 1. Créer plusieurs cotisations pour une collectivité
+# Test du POST qui accepte une liste (List<MembershipFee>)
+POST {{baseUrl}}/collectivities/{{collectivityId}}/membershipFees
 Content-Type: application/json
 
 [
   {
-    "memberIdentifier": "C1-M1",
-    "attendanceStatus": "ATTENDED"
+    "label": "Cotisation Annuelle 2026",
+    "amount": 50000,
+    "frequency": "ANNUALLY",
+    "eligibleFrom": "2026-01-01",
+    "status": "ACTIVE"
   },
   {
-    "memberIdentifier": "C1-M2",
-    "attendanceStatus": "ATTENDED"
-  },
-  {
-    "memberIdentifier": "C1-M3",
-    "attendanceStatus": "ATTENDED"
-  },
-  {
-    "memberIdentifier": "C1-M4",
-    "attendanceStatus": "MISSING"
+    "label": "Frais d'adhésion mensuels",
+    "amount": 5000,
+    "frequency": "MONTHLY",
+    "eligibleFrom": "2026-04-21",
+    "status": "ACTIVE"
   }
 ]
 
-###
+### 2. Récupérer toutes les cotisations d'une collectivité
+# Test du GET par ID de collectivité
+GET {{baseUrl}}/collectivities/{{collectivityId}}/membershipFees
+Accept: application/json
 
-### Membre externe (de col-2) qui assiste à une activité de col-1
-POST http://localhost:8080/collectivities/col-1/activities/act-id-1/attendance
+---
+
+### 3. Créer une cotisation avec un statut INACTIF (Cas de test)
+# Pour vérifier si ton service gère bien les différents états
+POST {{baseUrl}}/collectivities/{{collectivityId}}/membershipFees
 Content-Type: application/json
 
 [
   {
-    "memberIdentifier": "C1-M8",
-    "attendanceStatus": "MISSING"
+    "label": "Cotisation mensuel",
+    "amount": 4500,
+    "frequency": "MONTHLY",
+    "eligibleFrom": "2025-01-01"
   }
 ]
 
-### ============================================================
-### 5. CAS D'ERREUR - Attendance
-### ============================================================
+### 4. Test d'une collectivité inexistante ou vide
+# Pour vérifier que ton service renvoie bien une liste vide [] ou une 404
+GET {{baseUrl}}/collectivities/000000045/membershipFees
+Accept: application/json
 
-### Erreur 400 : tentative de modifier un statut déjà confirmé (ATTENDED ou MISSING)
-### C1-M1 a déjà été marqué ATTENDED → doit retourner 400
-POST http://localhost:8080/collectivities/col-1/activities/e99884f2-acee-4e05-9590-18a91ffec4f9/attendance
+### Créer des paiements pour un membre
+POST http://localhost:8080/members/M1/payments
 Content-Type: application/json
 
 [
   {
-    "memberIdentifier": "C1-M1",
-    "attendanceStatus": "MISSING"
+    "amount": 10000,
+    "membershipFeeId": "9782050f-8caf-4dc0-b465-e9379681b46e",
+    "accountCreditedId": "compte-test-1",
+    "paymentMode": "CASH"
   }
 ]
 
-###
+### Récupérer les transactions de la collectivité "COLL-01" pour le mois d'avril
+GET http://localhost:8080/collectivities/{{collectivityId}}/transactions?from=2026-04-01&to=2026-04-30
+Accept: application/json
 
-### Erreur 404 : membre inexistant
-POST http://localhost:8080/collectivities/col-1/activities/e99884f2-acee-4e05-9590-18a91ffec4f9/attendance
-Content-Type: application/json
+### Test d'erreur : Date 'from' après 'to' (Doit retourner une 400 via ton service)
+GET http://localhost:8080/collectivities/{{collectivityId}}/transactions?from=2026-12-31&to=2026-01-01
+Accept: application/json
 
-[
-  {
-    "memberIdentifier": "MEMBRE-INEXISTANT",
-    "attendanceStatus": "ATTENDED"
-  }
-]
 
-###
+### 1. Récupérer tous les comptes d'une collectivité (Date par défaut : aujourd'hui)
+GET http://localhost:8080/collectivities/col-2
+Accept: application/json
 
-### Erreur 404 : activité inexistante
-POST http://localhost:8080/collectivities/col-1/activities/activite-inexistante/attendance
-Content-Type: application/json
+### 2. Récupérer les comptes à une date précise (Paramètre 'at')
+# Utile pour voir l'état des soldes à une date passée
+GET http://localhost:8080/collectivities/col-1/financialAccounts?at=2026-04-23
+Accept: application/json
 
-[
-  {
-    "memberIdentifier": "C1-M1",
-    "attendanceStatus": "ATTENDED"
-  }
-]
+### 3. Test d'erreur : Format de date invalide
+# Doit retourner une erreur 400 (Bad Request) car le format attendu est YYYY-MM-DD
+GET http://localhost:8080/collectivities/{{collectivityId}}/financialAccounts?at=21-04-2026
+Accept: application/json
 
-### ============================================================
-### 6. GET ATTENDANCE - Récupérer les présences
-### ============================================================
+### 4. Test d'erreur : Identifiant de collectivité inexistant
+# Doit retourner une erreur 404 (Not Found) via ton service
+GET http://localhost:8080/collectivities/UNKNOWN_ID/financialAccounts
+Accept: application/json
 
-### Liste complète des présences (ATTENDED + MISSING + UNDEFINED)
-GET http://localhost:8080/collectivities/col-1/activities/e99884f2-acee-4e05-9590-18a91ffec4f9/attendance
-
-###
-
-### Erreur 404 : activité inexistante
-GET http://localhost:8080/collectivities/col-1/activities/activite-inexistante/attendance
-
-###
-
-### Erreur 404 : collectivité inexistante
-GET http://localhost:8080/collectivities/col-999/activities/act-id-1/attendance
+### 5. Test avec une date future
+GET http://localhost:8080/collectivities/{{collectivityId}}/financialAccounts?at=2027-12-31
+Accept: application/json

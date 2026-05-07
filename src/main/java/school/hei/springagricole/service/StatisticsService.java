@@ -119,9 +119,8 @@ public class StatisticsService {
                     statisticsRepository.computeCurrentDuePercentage(
                             collectivityId, from, to);
 
-            double assiduityPercentage =
-                    statisticsRepository.computeCollectivityAssiduityPercentage(
-                            collectivityId, from, to);
+            double assiduityPercentage = statisticsRepository
+                    .computeCollectivityAssiduityPercentage(collectivityId, from, to);
 
             result.add(new CollectivityOverallStatistics(
                     info, newMembers, duePercentage, assiduityPercentage));

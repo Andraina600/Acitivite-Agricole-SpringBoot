@@ -31,7 +31,8 @@ public class StatisticsController {
             @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
-        List<CollectivityLocalStatistics> stats = statisticsService.getLocalStatistics(id, from, to);
+        List<CollectivityLocalStatistics> stats =
+                statisticsService.getLocalStatistics(id, from, to);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(stats);
@@ -42,7 +43,8 @@ public class StatisticsController {
             @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
-        List<CollectivityOverallStatistics> stats = statisticsService.getOverallStatistics(from, to);
+        List<CollectivityOverallStatistics> stats =
+                statisticsService.getOverallStatistics(from, to);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(stats);
