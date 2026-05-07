@@ -1,0 +1,325 @@
+### ============================================================
+### TESTS SECURITE - x-api-key
+### ============================================================
+
+### 401 - en-tête absente
+GET http://localhost:8080/collectivities/col-1
+
+###
+
+### 401 - clé invalide
+GET http://localhost:8080/collectivities/col-1
+x-api-key: mauvaise-cle
+
+###
+
+### 200 - clé valide
+GET http://localhost:8080/collectivities/col-1
+x-api-key: agri-secure-key
+
+### ============================================================
+### COLLECTIVITES
+### ============================================================
+
+### GET collectivité par id
+GET http://localhost:8080/collectivities/col-1
+x-api-key: agri-secure-key
+
+###
+
+GET http://localhost:8080/collectivities/col-2
+x-api-key: agri-secure-key
+
+###
+
+GET http://localhost:8080/collectivities/col-3
+x-api-key: agri-secure-key
+
+###
+
+### GET collectivité inexistante → 404
+GET http://localhost:8080/collectivities/col-999
+x-api-key: agri-secure-key
+
+### ============================================================
+### COMPTES FINANCIERS
+### ============================================================
+
+GET http://localhost:8080/collectivities/col-1/financialAccounts
+x-api-key: agri-secure-key
+
+###
+
+GET http://localhost:8080/collectivities/col-2/financialAccounts
+x-api-key: agri-secure-key
+
+###
+
+GET http://localhost:8080/collectivities/col-3/financialAccounts
+x-api-key: agri-secure-key
+
+### ============================================================
+### COTISATIONS
+### ============================================================
+
+GET http://localhost:8080/collectivities/col-1/membershipFees
+x-api-key: agri-secure-key
+
+###
+
+GET http://localhost:8080/collectivities/col-2/membershipFees
+x-api-key: agri-secure-key
+
+###
+
+GET http://localhost:8080/collectivities/col-3/membershipFees
+x-api-key: agri-secure-key
+
+### ============================================================
+### TRANSACTIONS
+### ============================================================
+
+GET http://localhost:8080/collectivities/col-1/transactions?from=2026-01-01&to=2026-12-31
+x-api-key: agri-secure-key
+
+###
+
+GET http://localhost:8080/collectivities/col-2/transactions?from=2026-01-01&to=2026-12-31
+x-api-key: agri-secure-key
+
+###
+
+GET http://localhost:8080/collectivities/col-3/transactions?from=2026-01-01&to=2026-12-31
+x-api-key: agri-secure-key
+
+###
+
+### 400 - from > to
+GET http://localhost:8080/collectivities/col-1/transactions?from=2026-12-31&to=2026-01-01
+x-api-key: agri-secure-key
+
+### ============================================================
+### STATISTIQUES LOCALES
+### ============================================================
+
+GET http://localhost:8080/collectivities/col-1/statistics?from=2026-01-01&to=2026-12-31
+x-api-key: agri-secure-key
+
+###
+
+GET http://localhost:8080/collectivities/col-2/statistics?from=2026-01-01&to=2026-12-31
+x-api-key: agri-secure-key
+
+###
+
+GET http://localhost:8080/collectivities/col-3/statistics?from=2026-01-01&to=2026-12-31
+x-api-key: agri-secure-key
+
+###
+
+### 404 - collectivité inexistante
+GET http://localhost:8080/collectivities/col-999/statistics?from=2026-01-01&to=2026-12-31
+x-api-key: agri-secure-key
+
+###
+
+### 400 - dates invalides
+GET http://localhost:8080/collectivities/col-1/statistics?from=2026-12-31&to=2026-01-01
+x-api-key: agri-secure-key
+
+### ============================================================
+### STATISTIQUES GLOBALES
+### ============================================================
+
+GET http://localhost:8080/collectivities/statistics?from=2026-01-01&to=2026-12-31
+x-api-key: agri-secure-key
+
+###
+
+GET http://localhost:8080/collectivities/statistics?from=2026-01-01&to=2026-04-30
+x-api-key: agri-secure-key
+
+###
+
+### 400 - dates invalides
+GET http://localhost:8080/collectivities/statistics?from=2026-12-31&to=2026-01-01
+x-api-key: agri-secure-key
+
+### ============================================================
+### ACTIVITES
+### ============================================================
+
+### Activité récurrente - assemblée générale mensuelle col-1
+POST http://localhost:8080/collectivities/col-1/activities
+x-api-key: agri-secure-key
+Content-Type: application/json
+
+[
+  {
+    "label": "Assemblée générale mensuelle",
+    "activityType": "MEETING",
+    "memberOccupationConcerned": [],
+    "recurrenceRule": {
+      "weekOrdinal": 2,
+      "dayOfWeek": "SU"
+    }
+  }
+]
+
+###
+
+### Activité à date fixe - formation col-1
+POST http://localhost:8080/collectivities/col-1/activities
+x-api-key: agri-secure-key
+Content-Type: application/json
+
+[
+  {
+    "label": "Formation technique riziculture",
+    "activityType": "TRAINING",
+    "memberOccupationConcerned": [],
+    "executiveDate": "2026-06-15"
+  }
+]
+
+###
+
+### 400 - recurrenceRule ET executiveDate simultanés
+POST http://localhost:8080/collectivities/col-1/activities
+x-api-key: agri-secure-key
+Content-Type: application/json
+
+[
+  {
+    "label": "Activité invalide",
+    "activityType": "MEETING",
+    "memberOccupationConcerned": [],
+    "recurrenceRule": {
+      "weekOrdinal": 2,
+      "dayOfWeek": "SU"
+    },
+    "executiveDate": "2026-06-15"
+  }
+]
+
+###
+
+### GET activités col-1
+GET http://localhost:8080/collectivities/col-1/activities
+x-api-key: agri-secure-key
+
+###
+
+### GET activités col-2
+GET http://localhost:8080/collectivities/col-2/activities
+x-api-key: agri-secure-key
+
+###
+
+### 404 - collectivité inexistante
+GET http://localhost:8080/collectivities/col-999/activities
+x-api-key: agri-secure-key
+
+### ============================================================
+### ATTENDANCE
+### Remplace {activityId} par le vrai id retourné ci-dessus
+### ============================================================
+
+### POST attendance - marquer présences
+POST http://localhost:8080/collectivities/col-1/activities/{activityId}/attendance
+x-api-key: agri-secure-key
+Content-Type: application/json
+
+[
+  {
+    "memberIdentifier": "C1-M1",
+    "attendanceStatus": "ATTENDED"
+  },
+  {
+    "memberIdentifier": "C1-M2",
+    "attendanceStatus": "ATTENDED"
+  },
+  {
+    "memberIdentifier": "C1-M3",
+    "attendanceStatus": "ATTENDED"
+  },
+  {
+    "memberIdentifier": "C1-M4",
+    "attendanceStatus": "MISSING"
+  },
+  {
+    "memberIdentifier": "C1-M5",
+    "attendanceStatus": "ATTENDED"
+  },
+  {
+    "memberIdentifier": "C1-M6",
+    "attendanceStatus": "MISSING"
+  },
+  {
+    "memberIdentifier": "C1-M7",
+    "attendanceStatus": "ATTENDED"
+  },
+  {
+    "memberIdentifier": "C1-M8",
+    "attendanceStatus": "MISSING"
+  }
+]
+
+###
+
+### 400 - tentative de modifier un statut déjà confirmé
+POST http://localhost:8080/collectivities/col-1/activities/{activityId}/attendance
+x-api-key: agri-secure-key
+Content-Type: application/json
+
+[
+  {
+    "memberIdentifier": "C1-M1",
+    "attendanceStatus": "MISSING"
+  }
+]
+
+###
+
+### GET attendance
+GET http://localhost:8080/collectivities/col-1/activities/{activityId}/attendance
+x-api-key: agri-secure-key
+
+###
+
+### 404 - activité inexistante
+GET http://localhost:8080/collectivities/col-1/activities/activite-inexistante/attendance
+x-api-key: agri-secure-key
+
+### ============================================================
+### PAIEMENTS MEMBRES
+### ============================================================
+
+POST http://localhost:8080/members/C1-M1/payments
+x-api-key: agri-secure-key
+Content-Type: application/json
+
+[
+  {
+    "amount": 20000,
+    "membershipFeeIdentifier": "cot-2",
+    "accountCreditedIdentifier": "C1-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
+
+###
+
+### 404 - membre inexistant
+POST http://localhost:8080/members/MEMBRE-INEXISTANT/payments
+x-api-key: agri-secure-key
+Content-Type: application/json
+
+[
+  {
+    "amount": 20000,
+    "membershipFeeIdentifier": "cot-1",
+    "accountCreditedIdentifier": "C1-A-CASH",
+    "paymentMode": "CASH"
+  }
+]
