@@ -1,9 +1,5 @@
 ### ============================================================
 ### STATISTIQUES LOCALES - Collectivité 1
-### Attendu : earnedAmount et unpaidAmount par membre
-### C1-M1 à C1-M6 ont payé 100 000 (cotisation = 100 000) → unpaid = 0
-### C1-M7 a payé 60 000 (cotisation = 100 000) → unpaid = 40 000
-### C1-M8 a payé 90 000 (cotisation = 100 000) → unpaid = 10 000
 ### ============================================================
 
 GET http://localhost:8080/collectivities/col-1/statistics?from=2026-01-01&to=2026-12-31
@@ -12,11 +8,6 @@ GET http://localhost:8080/collectivities/col-1/statistics?from=2026-01-01&to=202
 
 ### ============================================================
 ### STATISTIQUES LOCALES - Collectivité 2
-### C1-M1 a payé 60 000 (cotisation = 100 000) → unpaid = 40 000
-### C1-M2 a payé 90 000 (cotisation = 100 000) → unpaid = 10 000
-### C1-M3 à C1-M6 ont payé 100 000 → unpaid = 0
-### C1-M7 a payé 40 000 → unpaid = 60 000
-### C1-M8 a payé 60 000 → unpaid = 40 000
 ### ============================================================
 
 GET http://localhost:8080/collectivities/col-2/statistics?from=2026-01-01&to=2026-12-31
@@ -25,7 +16,6 @@ GET http://localhost:8080/collectivities/col-2/statistics?from=2026-01-01&to=202
 
 ### ============================================================
 ### STATISTIQUES LOCALES - Collectivité 3
-### Aucun paiement effectué → earnedAmount = 0, unpaidAmount = 50 000 par membre
 ### ============================================================
 
 GET http://localhost:8080/collectivities/col-3/statistics?from=2026-01-01&to=2026-12-31
@@ -42,9 +32,6 @@ GET http://localhost:8080/collectivities/col-1/statistics?from=2026-01-01&to=202
 
 ### ============================================================
 ### STATISTIQUES GLOBALES - Toutes les collectivités
-### Attendu pour col-1 : 6/8 membres à jour → 75%, nouveaux membres selon admission_date
-### Attendu pour col-2 : 4/8 membres à jour → 50%
-### Attendu pour col-3 : 0/8 membres à jour → 0%
 ### ============================================================
 
 GET http://localhost:8080/collectivities/statistics?from=2026-01-01&to=2026-12-31

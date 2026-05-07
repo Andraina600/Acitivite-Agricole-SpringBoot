@@ -67,7 +67,7 @@ public class StatisticsRepository {
                                         WHEN 'ANNUALLY' THEN mf.amount
                                         WHEN 'MONTHLY'  THEN mf.amount *
                                             (EXTRACT(YEAR FROM AGE(LEAST(?, CURRENT_DATE), mf.eligible_from)) * 12
-                                            + EXTRACT(MONTH FROM AGE(LEAST(?, CURRENT_DATE), mf.eligible_from)) + 1)
+                                               + EXTRACT(MONTH FROM AGE(LEAST(?, CURRENT_DATE), mf.eligible_from)) + 1)
                                         ELSE mf.amount
                                     END)
                                    - COALESCE(
