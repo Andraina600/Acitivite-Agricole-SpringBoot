@@ -42,7 +42,7 @@ GET http://localhost:8080/collectivities/statistics?from=2026-01-01&to=2026-12-3
 ### STATISTIQUES GLOBALES - Période restreinte
 ### ============================================================
 
-GET http://localhost:8080/collectivities/statistics?from=2026-01-01&to=2026-06-30
+GET http://localhost:8080/collectivities/statistics?from=2026-01-01&to=2026-01-30
 
 ###
 

@@ -517,35 +517,35 @@ Content-Type: application/json
 ### 9. VERIFICATION - GET collectivites
 ### ============================================================
 
-GET https://localhost:8080/collectivities/col-1
+GET http://localhost:8080/collectivities/col-1
 
 ###
 
-GET https://localhost:8080/collectivities/col-2
+GET http://localhost:8080/collectivities/col-2
 
 ###
 
-GET https://localhost:8080/collectivities/col-3
+GET http://localhost:8080/collectivities/col-3
 
 ### ============================================================
 ### 10. VERIFICATION - GET cotisations
 ### ============================================================
 
-GET https://localhost:8080/collectivities/col-1/membershipFees
+GET http://localhost:8080/collectivities/col-1/membershipFees
 
 ###
 
-GET https://localhost:8080/collectivities/col-2/membershipFees
+GET http://localhost:8080/collectivities/col-2/membershipFees
 
 ###
 
-GET https://localhost:8080/collectivities/col-3/membershipFees
+GET http://localhost:8080/collectivities/col-3/membershipFees
 
 ### ============================================================
 ### 11. VERIFICATION - GET transactions
 ### ============================================================
 
-GET https://localhost:8080/collectivities/col-1/transactions?from=2026-01-01&to=2026-12-31
+GET http://localhost:8080/collectivities/col-1/transactions?from=2026-01-01&to=2026-12-31
 
 ###
 
