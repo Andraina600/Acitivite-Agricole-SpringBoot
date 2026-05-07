@@ -223,7 +223,7 @@ public class StatisticsRepository {
         }
 
         String countMembersSql =
-                "SELECT COUNT(*) FROM member WHERE collectivity_id = ?";
+                "SELECT COUNT(id) FROM member WHERE collectivity_id = ?";
         conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(countMembersSql)) {
             stmt.setString(1, collectivityId);
