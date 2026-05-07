@@ -15,7 +15,7 @@ public class ApiKeyFilter extends OncePerRequestFilter {
     private static final String API_KEY_HEADER = "x-api-key";
     private static final String BAD_CREDENTIALS = "Bad credentials";
 
-    @Value("${api.key:agri-secure-key}")
+    @Value("${API_KEY:agri-secure-key}")
     private String validApiKey;
 
     @Override

@@ -94,8 +94,7 @@ public class CollectivityActivityRepository {
     public List<CollectivityActivity> findByCollectivityId(String collectivityId) {
         Connection conn = dataSource.getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT id, collectivity_id, label, activity_type, \" +\n" +
-                        "\" executive_date, recurrence_week_ordinal," +
+                "SELECT id, collectivity_id, label, activity_type, executive_date, recurrence_week_ordinal," +
                         " recurrence_day_of_week " +
                      "FROM collectivity_activity WHERE collectivity_id = ?")) {
 
