@@ -36,15 +36,7 @@ INSERT INTO member (id, first_name, last_name, birth_date, gender, address, prof
                                                                                           ('C3-M7', 'Prénom membre 15', 'Nom membre 15', '1998-01-13', 'MALE',   'Lot UV 7 Antsirabe',   'Apiculteur',  374914567, 'member.15@fed-agri.mg', 'SENIOR',         'col-3', '2026-01-01'),
                                                                                           ('C3-M8', 'Prénom membre 16', 'Nom membre 16', '1975-08-02', 'MALE',   'Lot UV 8 Antsirabe',   'Apiculteur',  370634567, 'member.16@fed-agri.mg', 'SENIOR',         'col-3', '2026-01-01');
 
--- 8.1 Mise à jour admission_date de tous les anciens membres
---     à 01/01/2026 comme demandé dans le sujet
--- ------------------------------------------------------------
 
-UPDATE member SET admission_date = '2026-01-01'
-WHERE id IN (
-             'C1-M1','C1-M2','C1-M3','C1-M4','C1-M5','C1-M6','C1-M7','C1-M8',
-             'C3-M1','C3-M2','C3-M3','C3-M4','C3-M5','C3-M6','C3-M7','C3-M8'
-    );
 
 -- ------------------------------------------------------------
 -- 8.2 Nouveaux membres - Collectivité 1 (col-1)
